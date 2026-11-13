@@ -88,11 +88,18 @@ import TomSelect from 'tom-select'
 import { Controller } from '@hotwired/stimulus'
 ```
 
-**Import your own modules by relative path,** with the extension:
+**Import your own modules by asset name,** as importmap-rails pins them: the logical path without its extension, and a directory's name for its `index.js`. Relative paths work too:
 
 ```js
-import { setUpForms } from './forms.js'
-import './controllers/index.js'
+import { setUpForms } from 'forms'      // app/javascript/forms.js
+import 'controllers'                    // app/javascript/controllers/index.js
+import { helper } from './helpers.js'
+```
+
+**Import modules that gems ship the same way.** Every engine's `app/assets` directories are on Propshaft's load path, so a gem's modules are importable by asset name with no setup:
+
+```js
+import MathController from 'astrology/math_controller'
 ```
 
 **Import rarely used code dynamically.** The install vendors it too, but the page doesn't preload it, so the browser fetches it only when it runs:
@@ -167,10 +174,10 @@ npm installs two versions of a package when its dependents' ranges don't overlap
 
 `bin/rails jspm:install`:
 
-1. Traces `app/javascript/application.js` with [`@jspm/generator`](https://github.com/jspm/generator). The previous `config/importmap.json` locks versions, and `package-lock.json` pins every package npm installed. Only packages your code reaches end up in the map, so KaTeX's command-line dependency stays out.
+1. Boots the app, then traces `app/javascript/application.js` with [`@jspm/generator`](https://github.com/jspm/generator). Every module on Propshaft's load path is importable by asset name. The previous `config/importmap.json` locks versions, and `package-lock.json` pins every package npm installed. Only packages your code reaches end up in the map, so KaTeX's command-line dependency stays out.
 2. Downloads each traced module from jspm.io, with its source map, into `vendor/jspm/ga.jspm.io`.
 3. Copies each npm dependency's stylesheets, fonts and images into `vendor/jspm/<package>/`.
-4. Writes jspm's import map to `config/importmap.json`, with the list of modules to preload.
+4. Writes jspm's import map to `config/importmap.json`, with the list of modules to preload. Local modules appear as `asset:` plus their logical path, such as `asset:astrology/math_controller.js`, so the map is the same on every machine.
 
 `javascript_jspm_tags` renders that map for Propshaft. Propshaft serves each file under a digested name, so the helper rewrites the map's URLs:
 

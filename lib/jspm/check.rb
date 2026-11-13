@@ -7,9 +7,9 @@ module Jspm
   # Traces again without writing anything, and reports whether
   # config/importmap.json and vendor/jspm match what an install would produce.
   class Check
-    def self.call(output:, root:)
+    def self.call(asset_paths:, output:, root:)
       lockfile = Lockfile.read(root)
-      trace = Trace.call(lockfile:, root:)
+      trace = Trace.call(asset_paths:, lockfile:, root:)
       new(lockfile:, output:, root:, trace:).call
     end
 

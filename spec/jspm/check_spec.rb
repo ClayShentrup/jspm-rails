@@ -4,6 +4,7 @@ require 'rails_helper'
 
 RSpec.describe Jspm::Check do
   let!(:conflicted) { FixtureApp.copy('conflicted') }
+  let(:asset_paths) { [conflicted.join('app/javascript')] }
   let(:import_map_file) { conflicted.join('config/importmap.json') }
   let(:output) { StringIO.new }
 
@@ -20,12 +21,12 @@ RSpec.describe Jspm::Check do
 
   context 'when package-lock.json moved on since the install' do
     before do
-      Jspm::Install.call(output: StringIO.new, root: conflicted)
+      Jspm::Install.call(asset_paths:, output: StringIO.new, root: conflicted)
       import_map_file.write(import_map_file.read.gsub('tom-select@2.7.0', 'tom-select@2.4.1'))
     end
 
     it 'fails, and says to install' do
-      passed = described_class.call(output:, root: conflicted)
+      passed = described_class.call(asset_paths:, output:, root: conflicted)
 
       aggregate_failures do
         expect(output.string.lines).to eq(
@@ -41,12 +42,12 @@ RSpec.describe Jspm::Check do
 
   context "when a package's stylesheet changed since the install" do
     before do
-      Jspm::Install.call(output: StringIO.new, root: conflicted)
+      Jspm::Install.call(asset_paths:, output: StringIO.new, root: conflicted)
       conflicted.join('vendor/jspm/tom-select/dist/css/tom-select.css').write('')
     end
 
     it 'fails, and names the stylesheet' do
-      passed = described_class.call(output:, root: conflicted)
+      passed = described_class.call(asset_paths:, output:, root: conflicted)
 
       aggregate_failures do
         expect(output.string.lines).to eq(
@@ -62,12 +63,12 @@ RSpec.describe Jspm::Check do
 
   context 'when a vendored module is gone' do
     before do
-      Jspm::Install.call(output: StringIO.new, root: conflicted)
+      Jspm::Install.call(asset_paths:, output: StringIO.new, root: conflicted)
       conflicted.join('vendor/jspm/ga.jspm.io/npm/tom-select@2.7.0/dist/esm/constants.js').delete
     end
 
     it 'fails, and names the module' do
-      passed = described_class.call(output:, root: conflicted)
+      passed = described_class.call(asset_paths:, output:, root: conflicted)
 
       aggregate_failures do
         expect(output.string.lines).to eq(

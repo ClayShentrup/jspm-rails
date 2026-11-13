@@ -19,6 +19,10 @@ RSpec.describe 'the import map' do
     expect(import_map.fetch('scopes').keys).to contain_exactly('/assets/', '/assets/ga.jspm.io/')
   end
 
+  it "points an engine's module at its digested file" do
+    expect(imports.fetch('widget/badge')).to match(%r{\A/assets/widget/badge-\h+\.js\z})
+  end
+
   it 'sends a relative import to the digested file' do
     expect(imports.fetch('/assets/greeting.js')).to match(%r{\A/assets/greeting-\h+\.js\z})
   end

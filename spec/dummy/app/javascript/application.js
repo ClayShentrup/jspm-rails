@@ -1,7 +1,11 @@
 import TomSelect from 'tom-select'
 import { greeting } from './greeting.js'
+import { badge } from 'widget/badge'
+import { theme } from 'settings'
 
 document.getElementById('greeting').textContent = greeting
+document.getElementById('badge').textContent = badge()
+document.getElementById('theme').textContent = theme
 new TomSelect('#flavor')
 
 const { default: katex } = await import('katex')
