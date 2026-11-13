@@ -58,12 +58,36 @@ RSpec.describe Jspm::Install do
     before { described_class.call(output:, root: conflicted) }
 
     it 'warns about each version it could not honor' do
-      expect(output.string.lines.last(2)).to eq(
-        [
-          '        warn  @orchidjs/unicode-variants: package-lock.json has 1.1.1 and 1.2.2, ' \
-          "and the import map uses 1.1.1 everywhere\n",
-          "        warn  canvas-confetti isn't in package-lock.json, so its version isn't locked\n"
-        ]
+      expect(output.string.lines.last).to eq(
+        '        warn  @orchidjs/unicode-variants: package-lock.json has 1.1.1 and 1.2.2, ' \
+        "and the import map uses 1.1.1 everywhere\n"
+      )
+    end
+  end
+
+  context 'when an earlier install locked versions' do
+    let(:imports) { JSON.parse(conflicted.join('config/importmap.json').read).fetch('imports') }
+
+    before do
+      locked = {
+        imports: {
+          'canvas-confetti' => 'https://ga.jspm.io/npm:canvas-confetti@1.6.0/dist/confetti.module.mjs',
+          'tom-select' => 'https://ga.jspm.io/npm:tom-select@2.4.1/dist/esm/tom-select.complete.js'
+        }
+      }
+      conflicted.join('config/importmap.json').write(JSON.generate(locked))
+      described_class.call(output: StringIO.new, root: conflicted)
+    end
+
+    it 'keeps the version of a package npm never installed' do
+      expect(imports.fetch('canvas-confetti')).to eq(
+        'https://ga.jspm.io/npm:canvas-confetti@1.6.0/dist/confetti.module.mjs'
+      )
+    end
+
+    it 'moves an npm package to the version in package-lock.json' do
+      expect(imports.fetch('tom-select')).to eq(
+        'https://ga.jspm.io/npm:tom-select@2.7.0/dist/esm/tom-select.complete.js'
       )
     end
   end

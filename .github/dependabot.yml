@@ -1,0 +1,35 @@
+version: 2
+
+updates:
+  - package-ecosystem: bundler
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    groups:
+      gems:
+        patterns: ['*']
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    groups:
+      actions:
+        patterns: ['*']
+
+  # The test apps lock deliberately old versions, which the specs assert, so
+  # only the generator they install with gets updates.
+  - package-ecosystem: npm
+    directories:
+      - /spec/dummy
+      - /spec/fixtures/conflicted
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    allow:
+      - dependency-name: '@jspm/generator'

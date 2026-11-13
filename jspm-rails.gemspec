@@ -6,10 +6,11 @@ Gem::Specification.new do |spec|
   spec.name = 'jspm-rails'
   spec.version = Jspm::VERSION
   spec.authors = ['Clay Shentrup']
-  spec.summary = 'Import maps for Rails, built by jspm from your package-lock.json'
+  spec.summary = 'Import maps for Rails, built by jspm'
   spec.description = <<~DESCRIPTION
-    Traces app/javascript/application.js with jspm, vendors every module it reaches from jspm.io
-    at the versions in package-lock.json, and serves them through Propshaft. No bundler, no build step.
+    Traces app/javascript/application.js with jspm, vendors every module it reaches from jspm.io,
+    and serves them through Propshaft. Versions lock in jspm's import map, or in package-lock.json for
+    packages installed with npm. No bundler, no build step.
   DESCRIPTION
   spec.homepage = 'https://github.com/ClayShentrup/jspm-rails'
   spec.license = 'MIT'

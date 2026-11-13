@@ -10,8 +10,8 @@ module Jspm
   end
 
   # Traces app/javascript/application.js, vendors every module it reaches from
-  # jspm.io at the versions in package-lock.json, and writes
-  # config/importmap.json.
+  # jspm.io, and writes config/importmap.json. The previous import map locks
+  # each package's version, as in jspm, and package-lock.json overrides it.
   class Install
     SOURCE_MAP = %r{//# sourceMappingURL=(?<path>\S+\.map)\s*\z}
     PACKAGE_URL = %r{\Ahttps://ga\.jspm\.io/npm:(?<name>(?:@[^/]+/)?[^@/]+)@(?<version>[^/]+)/}
@@ -48,11 +48,26 @@ module Jspm
     attr_reader :output, :packages, :root
 
     def trace_entry
-      input = JSON.generate(entry: Paths::ENTRY_PATH, resolutions:, root: root.to_s)
+      input = JSON.generate(
+        entry: Paths::ENTRY_PATH,
+        inputMap: locked_map,
+        resolutions:,
+        root: root.to_s
+      )
       json, status = Open3.capture2('node', TRACE_SCRIPT, stdin_data: input)
       raise(Error, "tracing #{Paths::ENTRY_PATH} failed") unless status.success?
 
       JSON.parse(json)
+    end
+
+    def locked_map
+      return {} unless import_map_file.exist?
+
+      JSON.parse(import_map_file.read).except('preload')
+    end
+
+    def import_map_file
+      root.join('config/importmap.json')
     end
 
     def resolutions
@@ -92,7 +107,7 @@ module Jspm
 
     def write_import_map(trace)
       import_map = trace.fetch('map').merge('preload' => trace.fetch('preload'))
-      root.join('config/importmap.json').write("#{JSON.pretty_generate(import_map)}\n")
+      import_map_file.write("#{JSON.pretty_generate(import_map)}\n")
     end
 
     def warn_about_versions(urls)
@@ -108,9 +123,6 @@ module Jspm
           "#{name}: package-lock.json has #{versions.join(' and ')}, " \
           "and the import map uses #{traced.fetch(name)} everywhere"
         )
-      end
-      (traced.keys - resolutions.keys).each do |name|
-        report('warn', "#{name} isn't in package-lock.json, so its version isn't locked")
       end
     end
 
