@@ -1,0 +1,9 @@
+/pkg/
+/tmp/
+node_modules/
+/spec/dummy/config/importmap.json
+/spec/dummy/log/
+/spec/dummy/tmp/
+/spec/dummy/vendor/jspm/
+/spec/fixtures/*/config/importmap.json
+/spec/fixtures/*/vendor/jspm/

@@ -1,0 +1,67 @@
+plugins:
+  - rubocop-capybara
+  - rubocop-performance
+  - rubocop-rake
+  - rubocop-rspec
+  - rubocop-rspec_rails
+
+AllCops:
+  EnabledByDefault: true
+  NewCops: enable
+  SuggestExtensions: false
+  TargetRubyVersion: 3.3
+  Exclude:
+    - spec/dummy/tmp/**/*
+    - spec/dummy/vendor/**/*
+    - spec/fixtures/*/node_modules/**/*
+    - spec/dummy/node_modules/**/*
+    - vendor/**/*
+
+Metrics/AbcSize: { Enabled: false }
+Metrics/BlockLength: { Enabled: false }
+Metrics/ClassLength: { Enabled: false }
+Metrics/MethodLength: { Enabled: false }
+
+Lint/ConstantResolution: { Enabled: false }
+
+# Requires a Notice regex to check for; there is no copyright-header
+# convention to enforce.
+Style/Copyright: { Enabled: false }
+
+# RSpec expectation connectors stay paren-free.
+Style/MethodCallWithArgsParentheses:
+  AllowedMethods: [describe, to, not_to, to_not]
+
+Layout/LineLength: { Max: 100 }
+
+Layout/ArgumentAlignment: { EnforcedStyle: with_fixed_indentation }
+Layout/ArrayAlignment: { EnforcedStyle: with_fixed_indentation }
+Layout/FirstArrayElementIndentation: { EnforcedStyle: consistent }
+Layout/ParameterAlignment: { EnforcedStyle: with_fixed_indentation }
+Layout/RedundantLineBreak: { Enabled: false }
+
+RSpec/AlignLeftLetBrace: { Enabled: false }
+RSpec/AlignRightLetBrace: { Enabled: false }
+RSpec/ExampleLength: { Enabled: false }
+
+# System examples act and then assert in sequence, so neither one expectation
+# per example nor aggregate_failures can express them.
+RSpec/MultipleExpectations:
+  Exclude:
+    - spec/system/**/*
+
+# fetch says a key must exist, which is the point.
+Style/HashLookupMethod: { Enabled: false }
+Style/HashSyntax: { EnforcedShorthandSyntax: always }
+Style/MissingElse: { Enabled: false }
+Style/StringHashKeys: { Enabled: false }
+
+Style/DocumentationMethod: { Enabled: false }
+
+# Bundler requires a gem by its name, so the entry file keeps the gem's dash.
+Naming/FileName:
+  Exclude:
+    - lib/jspm-rails.rb
+
+# The lockfile owns versions.
+Bundler/GemVersion: { EnforcedStyle: forbidden }
