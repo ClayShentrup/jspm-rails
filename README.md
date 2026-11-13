@@ -237,11 +237,12 @@ Add its directory to `config.assets.paths`. See [Stylesheets, fonts and images](
 
 ```sh
 bundle install
+npm ci && npx playwright install chromium
 (cd spec/dummy && npm ci) && (cd spec/fixtures/conflicted && npm ci)
 bundle exec rake
 ```
 
-The specs install into a dummy Rails app through `bin/rails jspm:install`. Then they drive it in headless Chrome, on one origin and on two. So they need network access to jspm.io.
+The specs install into a dummy Rails app through `bin/rails jspm:install`. Then they drive it in Chromium through Playwright, on one origin and on two, finding elements by their accessible role and name. Any JavaScript error fails the example. So they need network access to jspm.io.
 
 Report security issues privately; see [SECURITY.md](SECURITY.md).
 

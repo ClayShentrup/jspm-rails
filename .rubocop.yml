@@ -107,3 +107,6 @@ Bundler/GemVersion: { EnforcedStyle: forbidden }
 Naming/FileName:
   Exclude:
     - lib/jspm-rails.rb
+
+# Characters are cheap; a rescued exception is an `error`, not an `e`.
+Naming/RescuedExceptionsVariableName: { PreferredName: error }

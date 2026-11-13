@@ -27,6 +27,8 @@ jobs:
         with:
           node-version: 24
       - run: npm ci --ignore-scripts
+      - run: npx playwright install --with-deps chromium
+      - run: npm ci --ignore-scripts
         working-directory: spec/dummy
       - run: npm ci --ignore-scripts
         working-directory: spec/fixtures/conflicted

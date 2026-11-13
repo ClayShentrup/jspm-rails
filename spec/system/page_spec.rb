@@ -3,33 +3,30 @@
 require 'rails_helper'
 
 RSpec.describe 'a page using jspm-rails' do
-  def katex_font_status
-    page.evaluate_async_script(<<~JS)
-      const done = arguments[0]
-      document.fonts.ready.then(() => {
-        const font = [...document.fonts].find((face) => face.family === 'KaTeX_Main' && face.status === 'loaded')
-        done(font ? 'loaded' : 'missing')
-      })
+  def katex_font_loaded?
+    page.evaluate(<<~JS)
+      () => document.fonts.ready.then((fonts) =>
+        [...fonts].some((face) => face.family === 'KaTeX_Main' && face.status === 'loaded')
+      )
     JS
   end
 
   shared_examples 'a working page' do
-    before { visit root_path }
+    before { page.goto(root_path) }
 
     it 'runs modules the entry imports by relative path' do
-      expect(page).to have_text('Hello from a relative import')
+      expect(page.get_by_text('Hello from a relative import')).to be_visible
     end
 
     it 'runs a dependency spread across many vendored files' do
-      expect(page).to have_css('[role=combobox]')
+      expect(page.get_by_role('combobox', name: 'Flavor')).to be_visible
     end
 
     it 'renders math with a dynamically imported module and its npm stylesheet and fonts' do
-      expect(page).to have_selector(:element, 'p', 'aria-label': 'Formula') { |formula|
-        formula.has_selector?(:element, 'math')
-      }
+      formula = page.get_by_role('region', name: 'Formula')
+      expect(formula.get_by_role('math')).to be_attached
 
-      expect(katex_font_status).to eq('loaded')
+      expect(katex_font_loaded?).to be(true)
     end
   end
 

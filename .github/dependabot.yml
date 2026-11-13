@@ -21,6 +21,13 @@ updates:
       actions:
         patterns: ['*']
 
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+
   # The test apps lock deliberately old versions, which the specs assert, so
   # only the generator they install with gets updates.
   - package-ecosystem: npm

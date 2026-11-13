@@ -3,10 +3,9 @@
 require 'rails_helper'
 
 RSpec.describe 'the import map' do
-  let(:document) { Nokogiri::HTML(response.body) }
-  let(:import_map) { JSON.parse(document.at_css('script[type=importmap]').text) }
+  let(:import_map) { JSON.parse(page.find('script[type=importmap]', visible: :all).text(:all)) }
   let(:imports) { import_map.fetch('imports') }
-  let(:preloads) { document.css('link[rel=modulepreload]').map { |link| link.attr('href') } }
+  let(:preloads) { page.all('link[rel=modulepreload]', visible: :all).map { |link| link[:href] } }
 
   before { get root_path }
 
@@ -37,7 +36,8 @@ RSpec.describe 'the import map' do
 
   it 'serves every module it names' do
     scoped = import_map.fetch('scopes').values.flat_map(&:values)
-    urls = [*imports.values, *scoped, *preloads, document.at_css('script[type=module]').attr('src')]
+    entry = page.find('script[type=module]', visible: :all)[:src]
+    urls = [*imports.values, *scoped, *preloads, entry]
     statuses =
       urls.uniq.to_h do |url|
         get(url)
