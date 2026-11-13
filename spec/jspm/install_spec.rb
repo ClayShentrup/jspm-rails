@@ -37,13 +37,13 @@ RSpec.describe Jspm::Install do
   end
 
   it 'vendors modules the entry imports dynamically' do
-    katex = dummy.join('vendor/jspm/ga.jspm.io/npm/katex@0.16.11/dist/katex.mjs')
+    katex = dummy.join('vendor/jspm/ga.jspm.io/npm/katex@0.18.2/dist/katex.mjs')
 
     expect(katex).to be_file
   end
 
   it 'vendors source maps' do
-    source_map = dummy.join('vendor/jspm/ga.jspm.io/npm/katex@0.16.11/dist/katex.mjs.map')
+    source_map = dummy.join('vendor/jspm/ga.jspm.io/npm/katex@0.18.2/dist/katex.mjs.map')
 
     expect(source_map).to be_file
   end
@@ -51,7 +51,7 @@ RSpec.describe Jspm::Install do
   it 'leaves out packages only Node uses' do
     vendored = dummy.join('vendor/jspm/ga.jspm.io/npm').children.map { |child| child.basename.to_s }
 
-    expect(vendored).to contain_exactly('@orchidjs', 'katex@0.16.11', 'tom-select@2.4.3')
+    expect(vendored).to contain_exactly('@orchidjs', 'katex@0.18.2', 'tom-select@2.4.3')
   end
 
   context 'when package-lock.json disagrees with itself' do
