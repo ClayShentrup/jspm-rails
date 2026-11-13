@@ -19,6 +19,7 @@ bin/rails jspm:install
 ```
       traced  ./app/javascript/application.js
     vendored  31 modules from ga.jspm.io
+      copied  73 assets from node_modules
        wrote  config/importmap.json
 ```
 
@@ -113,17 +114,17 @@ Mix the two freely. A package's JavaScript always comes from jspm.io either way.
 
 ## Stylesheets, fonts and images
 
-jspm.io serves JavaScript. For a package's other files, install it with npm and put its directory on Propshaft's load path, as Rails's generated `config/initializers/assets.rb` suggests:
-
-```ruby
-Rails.application.config.assets.paths << Rails.root.join('node_modules/katex/dist')
-```
+jspm.io serves JavaScript. For a package's other files, install it with npm as a dependency. The install copies the stylesheets, fonts and images of every package in `dependencies`, and their dependencies, into `vendor/jspm/<package>/`:
 
 ```erb
-<%= stylesheet_link_tag 'katex' %>
+<%= stylesheet_link_tag 'katex/dist/katex' %>
 ```
 
 Propshaft rewrites the `url()`s in the stylesheet to digested paths, so the fonts load too. The CSS comes from npm and the JavaScript from jspm.io, both at the version in `package-lock.json`.
+
+Each name starts with its package, so two packages' `style.css` never collide. `devDependencies` are build tools, so the install leaves them out.
+
+Why copy, instead of putting `node_modules` on the load path? Propshaft checks every file on its load path for changes before each request in development. With one real app's `node_modules` (8,900 files), that took a page request from 1.4 ms to 98 ms. Production would also precompile all of `node_modules` into `public/assets`.
 
 ## Keeping up to date
 
@@ -137,7 +138,7 @@ Propshaft rewrites the `url()`s in the stylesheet to digested paths, so the font
 bin/rails jspm:check
 ```
 
-It traces again without writing anything. It fails when an install would change `config/importmap.json`, for example after Dependabot bumps `package-lock.json`, or when a module is missing from `vendor/jspm`:
+It traces again without writing anything. It fails when an install would change `config/importmap.json`, for example after Dependabot bumps `package-lock.json`. It also fails when a module is missing from `vendor/jspm`, or a copied stylesheet, font or image no longer matches `node_modules`:
 
 ```
        stale  config/importmap.json
@@ -157,7 +158,7 @@ npm installs two versions of a package when its dependents' ranges don't overlap
 ## Deploying
 
 - **Commit `config/importmap.json` and `vendor/jspm`.** `assets:precompile` digests the vendored modules like any other asset.
-- **Production needs no Node and no jspm.io.** The one exception is stylesheets served from `node_modules`, which need `npm ci` before precompiling.
+- **Production needs no Node, no npm and no jspm.io.**
 - **An `asset_host` on another origin must send `Access-Control-Allow-Origin`.** Browsers load modules and fonts across origins only with CORS.
 - **Content Security Policy works.** Every tag carries the request's nonce.
 - **Turbo reloads the page when the import map changes,** because the map's tag has `data-turbo-track="reload"`.
@@ -168,7 +169,8 @@ npm installs two versions of a package when its dependents' ranges don't overlap
 
 1. Traces `app/javascript/application.js` with [`@jspm/generator`](https://github.com/jspm/generator). The previous `config/importmap.json` locks versions, and `package-lock.json` pins every package npm installed. Only packages your code reaches end up in the map, so KaTeX's command-line dependency stays out.
 2. Downloads each traced module from jspm.io, with its source map, into `vendor/jspm/ga.jspm.io`.
-3. Writes jspm's import map to `config/importmap.json`, with the list of modules to preload.
+3. Copies each npm dependency's stylesheets, fonts and images into `vendor/jspm/<package>/`.
+4. Writes jspm's import map to `config/importmap.json`, with the list of modules to preload.
 
 `javascript_jspm_tags` renders that map for Propshaft. Propshaft serves each file under a digested name, so the helper rewrites the map's URLs:
 
@@ -231,7 +233,7 @@ Node printed the reason just above. Usually Node isn't on your `PATH`, or `@jspm
 The asset host must send `Access-Control-Allow-Origin`. See [Deploying](#deploying).
 
 **A package's stylesheet 404s**
-Add its directory to `config.assets.paths`. See [Stylesheets, fonts and images](#stylesheets-fonts-and-images).
+Install the package with npm as a dependency, not a devDependency, and run the install. See [Stylesheets, fonts and images](#stylesheets-fonts-and-images).
 
 ## Development
 

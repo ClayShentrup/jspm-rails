@@ -5,7 +5,8 @@ require 'json'
 require 'net/http'
 
 module Jspm
-  # Vendors every module the trace reaches from jspm.io, and writes
+  # Vendors every module the trace reaches from jspm.io, copies npm
+  # dependencies' stylesheets, fonts and images, and writes
   # config/importmap.json.
   class Install
     SOURCE_MAP = %r{//# sourceMappingURL=(?<path>\S+\.map)\s*\z}
@@ -31,10 +32,16 @@ module Jspm
       cdn = URI(Paths::CDN)
       cdn_urls = trace.cdn_urls
       Net::HTTP.start(cdn.host, cdn.port, use_ssl: true) { |http| download_all(http, cdn_urls, vendor_dir) }
+      copies = Assets.copies(lockfile:, root:)
+      copies.each do |source, target|
+        target.dirname.mkpath
+        FileUtils.cp(source, target)
+      end
       root.join(Paths::IMPORT_MAP).write("#{JSON.pretty_generate(trace.import_map)}\n")
 
       report('traced', Paths::ENTRY_PATH)
       report('vendored', "#{cdn_urls.size} modules from ga.jspm.io")
+      report('copied', "#{copies.size} assets from node_modules")
       report('wrote', Paths::IMPORT_MAP)
       warn_about_versions
     end
