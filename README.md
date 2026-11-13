@@ -18,7 +18,6 @@ bin/rails jspm:install
 ```
       traced  ./app/javascript/application.js
     vendored  31 modules from ga.jspm.io
-      copied  71 assets from node_modules
        wrote  config/importmap.json
 ```
 
@@ -47,7 +46,7 @@ That emits the import map, a `modulepreload` link for each module your entry imp
 
 ## Usage
 
-1. Install browser packages with npm, as `dependencies`. Build tools belong in `devDependencies`; jspm-rails leaves those alone.
+1. Install browser packages with npm.
 2. Import them from `app/javascript/application.js`. Import your own modules by relative path:
 
    ```js
@@ -67,23 +66,26 @@ bin/rails jspm:install && git diff --exit-code config/importmap.json vendor/jspm
 
 ### Stylesheets, fonts and images
 
-jspm.io serves JavaScript. For everything else, jspm-rails copies the stylesheets, fonts and images of each npm dependency into `vendor/jspm/<package>/`. Propshaft serves them, and rewrites the `url()`s in each stylesheet to digested paths:
+jspm.io serves JavaScript. For a package's stylesheets and fonts, put its directory on Propshaft's load path, as Rails's generated `config/initializers/assets.rb` suggests:
 
-```erb
-<%= stylesheet_link_tag 'katex/dist/katex' %>
+```ruby
+Rails.application.config.assets.paths << Rails.root.join('node_modules/katex/dist')
 ```
 
-The JavaScript comes from jspm.io and the CSS from npm. Both are at the version in `package-lock.json`, so they always match.
+```erb
+<%= stylesheet_link_tag 'katex' %>
+```
+
+Propshaft rewrites the `url()`s in the stylesheet to digested paths. The JavaScript comes from jspm.io and the CSS from npm. Both are at the version in `package-lock.json`, so they always match.
 
 ## How it works
 
 `bin/rails jspm:install`:
 
-1. Reads every non-dev package in `package-lock.json`.
+1. Reads every package in `package-lock.json`.
 2. Traces `app/javascript/application.js` with [`@jspm/generator`](https://github.com/jspm/generator), pinning each of those packages to its locked version. Only packages your code reaches end up in the map, so KaTeX's command-line dependency stays out.
 3. Downloads each traced module from `ga.jspm.io`, and its source map, into `vendor/jspm/ga.jspm.io`.
-4. Copies each npm dependency's stylesheets, fonts and images into `vendor/jspm`.
-5. Writes jspm's import map to `config/importmap.json`, with the list of modules to preload.
+4. Writes jspm's import map to `config/importmap.json`, with the list of modules to preload.
 
 `javascript_jspm_tags` rewrites the map's jspm.io URLs to Propshaft's digested paths. Propshaft renames every file to include its digest, but a module imports its siblings by their plain names. So the rendered map also sends each plain module URL to its digested one, and relative imports land on the right file.
 
@@ -101,7 +103,7 @@ npm can install two versions of one package when their ranges don't overlap. An 
 ## Requirements and limits
 
 - Rails 8 with Propshaft.
-- Node and npm when you run the install, and network access to jspm.io. Production needs neither.
+- Node and npm when you run the install, and network access to jspm.io. Production needs neither, unless you serve stylesheets from `node_modules`.
 - One entry point: `app/javascript/application.js`.
 - If `asset_host` points at another origin, that origin must send `Access-Control-Allow-Origin`, because browsers load modules and fonts across origins only with CORS.
 - Untested on Windows.

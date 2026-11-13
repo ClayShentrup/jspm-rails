@@ -5,7 +5,6 @@
     "tom-select": "^2.4.3"
   },
   "devDependencies": {
-    "@jspm/generator": "^2.18.0",
-    "normalize.css": "^8.0.1"
+    "@jspm/generator": "^2.18.0"
   }
 }

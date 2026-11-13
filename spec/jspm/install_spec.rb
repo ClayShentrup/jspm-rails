@@ -11,7 +11,6 @@ RSpec.describe Jspm::Install do
       [
         "      traced  ./app/javascript/application.js\n",
         "    vendored  31 modules from ga.jspm.io\n",
-        "      copied  71 assets from node_modules\n",
         "       wrote  config/importmap.json\n"
       ]
     )
@@ -51,16 +50,6 @@ RSpec.describe Jspm::Install do
     vendored = dummy.join('vendor/jspm/ga.jspm.io/npm').children.map { |child| child.basename.to_s }
 
     expect(vendored).to contain_exactly('@orchidjs', 'katex@0.16.11', 'tom-select@2.4.3')
-  end
-
-  it "copies each npm package's fonts" do
-    font = dummy.join('vendor/jspm/katex/dist/fonts/KaTeX_Main-Regular.woff2')
-
-    expect(font).to be_file
-  end
-
-  it "leaves out devDependencies' assets" do
-    expect(dummy.join('vendor/jspm/normalize.css')).not_to exist
   end
 
   context 'when package-lock.json disagrees with itself' do
