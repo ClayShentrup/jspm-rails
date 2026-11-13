@@ -6,6 +6,8 @@ gemspec
 
 # Drives the dummy app in a browser for the system specs.
 gem 'capybara'
+# Drives Chromium for the system specs, through Playwright's own API.
+gem 'playwright-ruby-client'
 # Serves the dummy app to the browser.
 gem 'puma'
 # Boots the dummy app the specs install into.
@@ -28,5 +30,3 @@ gem 'rubocop-rake'
 gem 'rubocop-rspec'
 # Lints the Rails-specific parts of the specs.
 gem 'rubocop-rspec_rails'
-# Controls headless Chrome for the system specs.
-gem 'selenium-webdriver'
