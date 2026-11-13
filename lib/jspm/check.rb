@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'fileutils'
 require 'json'
 
 module Jspm
@@ -9,10 +10,11 @@ module Jspm
     def self.call(output:, root:)
       lockfile = Lockfile.read(root)
       trace = Trace.call(lockfile:, root:)
-      new(output:, root:, trace:).call
+      new(lockfile:, output:, root:, trace:).call
     end
 
-    def initialize(output:, root:, trace:)
+    def initialize(lockfile:, output:, root:, trace:)
+      @lockfile = lockfile
       @output = output
       @root = root
       @trace = trace
@@ -21,10 +23,12 @@ module Jspm
     def call
       written = written?
       missing = missing_modules
+      stale_assets = stale_asset_paths
       report('stale', Paths::IMPORT_MAP) unless written
       missing.each { |path| report('missing', path) }
+      stale_assets.each { |path| report('stale', path) }
 
-      up_to_date = written && missing.empty?
+      up_to_date = written && missing.empty? && stale_assets.empty?
       if up_to_date
         report('ok', 'nothing to install')
       else
@@ -35,11 +39,20 @@ module Jspm
 
     private
 
-    attr_reader :output, :root, :trace
+    attr_reader :lockfile, :output, :root, :trace
 
     def written?
       import_map_file = root.join(Paths::IMPORT_MAP)
       import_map_file.exist? && JSON.parse(import_map_file.read) == trace.import_map
+    end
+
+    def stale_asset_paths
+      copies = Assets.copies(lockfile:, root:)
+      stale =
+        copies.reject do |source, target|
+          target.file? && FileUtils.compare_file(source, target)
+        end
+      stale.map { |_source, target| target.relative_path_from(root).to_s }
     end
 
     def missing_modules

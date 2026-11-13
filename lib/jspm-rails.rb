@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'jspm/assets'
 require 'jspm/check'
 require 'jspm/helper'
 require 'jspm/install'

@@ -39,6 +39,27 @@ RSpec.describe Jspm::Check do
     end
   end
 
+  context "when a package's stylesheet changed since the install" do
+    before do
+      Jspm::Install.call(output: StringIO.new, root: conflicted)
+      conflicted.join('vendor/jspm/tom-select/dist/css/tom-select.css').write('')
+    end
+
+    it 'fails, and names the stylesheet' do
+      passed = described_class.call(output:, root: conflicted)
+
+      aggregate_failures do
+        expect(output.string.lines).to eq(
+          [
+            "       stale  vendor/jspm/tom-select/dist/css/tom-select.css\n",
+            "         run  bin/rails jspm:install\n"
+          ]
+        )
+        expect(passed).to be(false)
+      end
+    end
+  end
+
   context 'when a vendored module is gone' do
     before do
       Jspm::Install.call(output: StringIO.new, root: conflicted)

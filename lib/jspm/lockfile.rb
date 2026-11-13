@@ -6,7 +6,11 @@ module Jspm
   # The packages npm installed, as package-lock.json records them.
   class Lockfile
     Package =
-      Data.define(:name, :top_level, :version) do
+      Data.define(:dev, :name, :path, :top_level, :version) do
+        def browser?
+          top_level && !dev
+        end
+
         def resolution
           [name, version]
         end
@@ -25,7 +29,8 @@ module Jspm
           name = path.split('node_modules/').last
           top_level = path.scan('node_modules/').one?
           version = package.fetch('version')
-          Package.new(name:, top_level:, version:)
+          dev = package.fetch('dev', false)
+          Package.new(dev:, name:, path:, top_level:, version:)
         end
       new(packages:)
     end
@@ -36,6 +41,10 @@ module Jspm
 
     def resolutions
       packages.select(&:top_level).to_h(&:resolution)
+    end
+
+    def browser_packages
+      packages.select(&:browser?)
     end
 
     def nested_versions(name)
