@@ -13,7 +13,7 @@ module Jspm
     private_constant :MODULE_EXTENSIONS
 
     def self.call(view:)
-      import_map = JSON.parse(Rails.root.join('config/importmap.json').read)
+      import_map = JSON.parse(Rails.root.join(Paths::IMPORT_MAP).read)
       load_path = Rails.application.assets.load_path
       entry_url = view.asset_path(Paths::ENTRY)
       digested_entry = load_path.find(Paths::ENTRY).digested_path.to_s
@@ -31,19 +31,21 @@ module Jspm
 
     def call
       nonce = view.content_security_policy_nonce
+      tag = view.tag
+      imports = asset_urls(import_map.fetch('imports'))
       json = ERB::Util.json_escape(JSON.generate(imports: imports.merge(digests), scopes:))
       preloads =
         import_map.fetch('preload').map do |url|
           href = asset_url(url)
-          view.tag.link(href:, nonce:, rel: 'modulepreload')
+          tag.link(href:, nonce:, rel: 'modulepreload')
         end
-      import_map_tag = view.tag.script(
+      import_map_tag = tag.script(
         json.html_safe,
         data: { turbo_track: 'reload' },
         nonce:,
         type: 'importmap'
       )
-      entry_tag = view.tag.script(nonce:, src: entry_url, type: 'module')
+      entry_tag = tag.script(nonce:, src: entry_url, type: 'module')
       view.safe_join([import_map_tag, *preloads, entry_tag], "\n")
     end
 
@@ -51,23 +53,25 @@ module Jspm
 
     attr_reader :entry_url, :import_map, :load_path, :prefix, :view
 
-    def imports
-      import_map.fetch('imports').transform_values { |url| asset_url(url) }
-    end
-
     def scopes
       import_map.fetch('scopes', {}).to_h do |scope, specifiers|
-        urls = specifiers.transform_values { |url| asset_url(url) }
-        ["#{prefix}#{Paths.logical(scope)}", urls]
+        ["#{prefix}#{Paths.logical(scope)}", asset_urls(specifiers)]
       end
     end
 
+    def asset_urls(specifiers)
+      specifiers.transform_values { |url| asset_url(url) }
+    end
+
     def digests
+      paths = load_path.assets.map { |asset| [asset.logical_path, asset.digested_path] }
       modules =
-        load_path.assets.select do |asset|
-          MODULE_EXTENSIONS.include?(asset.logical_path.extname)
+        paths.select do |logical_path, _digested_path|
+          MODULE_EXTENSIONS.include?(logical_path.extname)
         end
-      modules.to_h { |asset| ["#{prefix}#{asset.logical_path}", "#{prefix}#{asset.digested_path}"] }
+      modules.to_h do |logical_path, digested_path|
+        ["#{prefix}#{logical_path}", "#{prefix}#{digested_path}"]
+      end
     end
 
     def asset_url(url)

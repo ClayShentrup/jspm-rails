@@ -4,6 +4,7 @@ ENV['RAILS_ENV'] = 'test'
 
 require_relative 'dummy/config/environment'
 require_relative 'support/dummy_install'
+require_relative 'support/fixture_app'
 require 'capybara/rspec'
 require 'rspec/rails'
 

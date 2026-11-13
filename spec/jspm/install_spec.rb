@@ -3,8 +3,10 @@
 require 'rails_helper'
 
 RSpec.describe Jspm::Install do
-  let(:conflicted) { Pathname(File.expand_path('../fixtures/conflicted', __dir__)) }
+  let!(:conflicted) { FixtureApp.copy('conflicted') }
   let(:dummy) { Pathname(DummyInstall::DIRECTORY) }
+
+  after { FileUtils.rm_rf(conflicted) }
 
   it 'reports what it vendored' do
     expect(DummyInstall.output.lines).to eq(

@@ -3,119 +3,67 @@
 require 'fileutils'
 require 'json'
 require 'net/http'
-require 'open3'
 
 module Jspm
-  class Error < StandardError
-  end
-
-  # Traces app/javascript/application.js, vendors every module it reaches from
-  # jspm.io, and writes config/importmap.json. The previous import map locks
-  # each package's version, as in jspm, and package-lock.json overrides it.
+  # Vendors every module the trace reaches from jspm.io, and writes
+  # config/importmap.json.
   class Install
     SOURCE_MAP = %r{//# sourceMappingURL=(?<path>\S+\.map)\s*\z}
     PACKAGE_URL = %r{\Ahttps://ga\.jspm\.io/npm:(?<name>(?:@[^/]+/)?[^@/]+)@(?<version>[^/]+)/}
-    TRACE_SCRIPT = File.expand_path('trace.mjs', __dir__)
-    private_constant :PACKAGE_URL, :SOURCE_MAP, :TRACE_SCRIPT
+    private_constant :PACKAGE_URL, :SOURCE_MAP
 
     def self.call(output:, root:)
-      lockfile = JSON.parse(root.join('package-lock.json').read)
-      packages = lockfile.fetch('packages').reject { |path, _package| path.empty? }
-      new(output:, packages:, root:).call
+      lockfile = Lockfile.read(root)
+      trace = Trace.call(lockfile:, root:)
+      new(lockfile:, output:, root:, trace:).call
     end
 
-    def initialize(output:, packages:, root:)
+    def initialize(lockfile:, output:, root:, trace:)
+      @lockfile = lockfile
       @output = output
-      @packages = packages
       @root = root
+      @trace = trace
     end
 
     def call
-      trace = trace_entry
-      urls = trace.fetch('staticDeps') + trace.fetch('dynamicDeps')
+      vendor_dir = root.join(Paths::VENDOR)
       FileUtils.rm_rf(vendor_dir)
-      modules = vendor_modules(urls)
-      write_import_map(trace)
+      cdn = URI(Paths::CDN)
+      cdn_urls = trace.cdn_urls
+      Net::HTTP.start(cdn.host, cdn.port, use_ssl: true) { |http| download_all(http, cdn_urls, vendor_dir) }
+      root.join(Paths::IMPORT_MAP).write("#{JSON.pretty_generate(trace.import_map)}\n")
 
       report('traced', Paths::ENTRY_PATH)
-      report('vendored', "#{modules} modules from ga.jspm.io")
-      report('wrote', 'config/importmap.json')
-      warn_about_versions(urls)
+      report('vendored', "#{cdn_urls.size} modules from ga.jspm.io")
+      report('wrote', Paths::IMPORT_MAP)
+      warn_about_versions
     end
 
     private
 
-    attr_reader :output, :packages, :root
+    attr_reader :lockfile, :output, :root, :trace
 
-    def trace_entry
-      input = JSON.generate(
-        entry: Paths::ENTRY_PATH,
-        inputMap: locked_map,
-        resolutions:,
-        root: root.to_s
-      )
-      json, status = Open3.capture2('node', TRACE_SCRIPT, stdin_data: input)
-      raise(Error, "tracing #{Paths::ENTRY_PATH} failed") unless status.success?
-
-      JSON.parse(json)
+    def download_all(http, urls, vendor_dir)
+      urls.each { |url| download(http, url, vendor_dir) }
     end
 
-    def locked_map
-      return {} unless import_map_file.exist?
-
-      JSON.parse(import_map_file.read).except('preload')
-    end
-
-    def import_map_file
-      root.join('config/importmap.json')
-    end
-
-    def resolutions
-      top_level_packages.to_h { |path, package| [package_name(path), package.fetch('version')] }
-    end
-
-    def top_level_packages
-      packages.select { |path, _package| top_level?(path) }
-    end
-
-    def top_level?(path)
-      path.scan('node_modules/').one?
-    end
-
-    def package_name(path)
-      path.split('node_modules/').last
-    end
-
-    def vendor_modules(urls)
-      cdn_urls = urls.select { |url| url.start_with?(Paths::CDN) }
-      cdn = URI(Paths::CDN)
-      Net::HTTP.start(cdn.host, cdn.port, use_ssl: true) do |http|
-        cdn_urls.each { |url| download(http, url) }
-      end
-      cdn_urls.size
-    end
-
-    def download(http, url)
-      response = http.get(URI(url).path)
-      response.value
+    def download(http, url, vendor_dir)
+      body = http.get(URI(url).path).tap(&:value).body
       file = vendor_dir.join(Paths.logical(url))
       file.dirname.mkpath
-      file.binwrite(response.body)
-      source_maps = response.body.scan(SOURCE_MAP).map { |(path)| URI.join(url, path).to_s }
-      source_maps.each { |source_map| download(http, source_map) }
+      file.binwrite(body)
+      source_maps = body.scan(SOURCE_MAP).map { |(path)| URI.join(url, path).to_s }
+      download_all(http, source_maps, vendor_dir)
     end
 
-    def write_import_map(trace)
-      import_map = trace.fetch('map').merge('preload' => trace.fetch('preload'))
-      import_map_file.write("#{JSON.pretty_generate(import_map)}\n")
-    end
-
-    def warn_about_versions(urls)
-      traced = traced_packages(urls)
-      versions_by_name =
-        traced.to_h do |name, version|
-          [name, (nested_versions(name) | [version]).sort]
+    def warn_about_versions
+      packages =
+        trace.urls.grep(PACKAGE_URL) do |url|
+          url.match(PACKAGE_URL).values_at(:name, :version)
         end
+      traced = packages.sort.to_h
+      versions_by_name =
+        traced.to_h { |name, version| [name, (lockfile.nested_versions(name) | [version]).sort] }
       conflicts = versions_by_name.select { |_name, versions| versions.many? }
       conflicts.each do |name, versions|
         report(
@@ -124,24 +72,6 @@ module Jspm
           "and the import map uses #{traced.fetch(name)} everywhere"
         )
       end
-    end
-
-    def traced_packages(urls)
-      urls.grep(PACKAGE_URL) { |url| url.match(PACKAGE_URL).values_at(:name, :version) }
-          .sort
-          .to_h
-    end
-
-    def nested_versions(name)
-      packages.filter_map do |path, package|
-        same_name = package_name(path) == name
-        nested = !top_level?(path)
-        package.fetch('version') if same_name && nested
-      end
-    end
-
-    def vendor_dir
-      root.join('vendor/jspm')
     end
 
     def report(status, message)

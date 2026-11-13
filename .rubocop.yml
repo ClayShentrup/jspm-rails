@@ -11,16 +11,19 @@ AllCops:
   SuggestExtensions: false
   TargetRubyVersion: 3.3
   Exclude:
+    - spec/dummy/node_modules/**/*
     - spec/dummy/tmp/**/*
     - spec/dummy/vendor/**/*
     - spec/fixtures/*/node_modules/**/*
-    - spec/dummy/node_modules/**/*
     - vendor/**/*
 
+# Length is arbitrary, and it isn't complexity. Cyclomatic and perceived
+# complexity stay on.
 Metrics/AbcSize: { Enabled: false }
 Metrics/BlockLength: { Enabled: false }
 Metrics/ClassLength: { Enabled: false }
 Metrics/MethodLength: { Enabled: false }
+Metrics/ModuleLength: { Enabled: false }
 
 Lint/ConstantResolution: { Enabled: false }
 
@@ -32,8 +35,12 @@ Style/Copyright: { Enabled: false }
 Style/MethodCallWithArgsParentheses:
   AllowedMethods: [describe, to, not_to, to_not]
 
+# Narrow enough that two files fit side by side on a standard 27-inch monitor.
 Layout/LineLength: { Max: 100 }
 
+# Flat 2-space continuation indent, not vertical alignment with the first arg
+# or with the opening bracket, which reindents every element when the receiver
+# is renamed.
 Layout/ArgumentAlignment: { EnforcedStyle: with_fixed_indentation }
 Layout/ArrayAlignment: { EnforcedStyle: with_fixed_indentation }
 Layout/FirstArrayElementIndentation: { EnforcedStyle: consistent }
@@ -44,24 +51,59 @@ RSpec/AlignLeftLetBrace: { Enabled: false }
 RSpec/AlignRightLetBrace: { Enabled: false }
 RSpec/ExampleLength: { Enabled: false }
 
-# System examples act and then assert in sequence, so neither one expectation
+# System specs interleave assertions with sequential actions, and a failed
+# Capybara action raises before the later steps run, so neither one assertion
 # per example nor aggregate_failures can express them.
 RSpec/MultipleExpectations:
   Exclude:
     - spec/system/**/*
 
-# fetch says a key must exist, which is the point.
+# Flags `{ }` as a likely-forgotten body, forcing the redundant `{ nil }`.
+# But nil is superfluous, so bare `{ }` is right for nil-default blocks, and
+# the cop can't be inverted.
+Lint/EmptyBlock: { Enabled: false }
+
+# Message expectations are set BEFORE the invocation (expect(...).to receive),
+# never post-hoc have_received, and a mock may carry its stubbed response.
+RSpec/MessageSpies: { EnforcedStyle: receive }
+
+# A mock that returns a value doesn't strictly need to fail, since whatever
+# depends on that value would fail first. But failing is handy when a refactor
+# removes the dependency, because it tells you to delete the mock.
+RSpec/StubbedMock: { Enabled: false }
+
+# With allow, refactoring away the call leaves the now-useless stub behind
+# with no warning. expect fails once the call stops happening.
+RSpec/MessageExpectation: { EnforcedStyle: expect }
+
+# The default 5 trips on contexts that genuinely need several records. 8 still
+# catches the runaway case.
+RSpec/MultipleMemoizedHelpers: { Max: 8 }
+
+# fetch is strictly better than [] — a missing key fails fast at the point of
+# reference instead of returning nil — but the linter can't tell whether a
+# receiver is a Hash or something that only responds to [], so it can't be
+# trusted to enforce our fetch-everywhere convention.
+# https://avdi.codes/go-fetch/
 Style/HashLookupMethod: { Enabled: false }
-Style/HashSyntax: { EnforcedShorthandSyntax: always }
-Style/MissingElse: { Enabled: false }
+
+# Parsed JSON is string-keyed, and a string key there is load-bearing.
 Style/StringHashKeys: { Enabled: false }
 
+# Demands an else on every if, even when there's nothing else to do, while
+# Style/EmptyElse rejects an empty else. Together they're unsatisfiable.
+Style/MissingElse: { Enabled: false }
+
+# A comment explains a non-obvious why, never what a method does.
 Style/DocumentationMethod: { Enabled: false }
+
+# `foo:` over `foo: foo`. The default (`either`) allows both.
+Style/HashSyntax: { EnforcedShorthandSyntax: always }
+
+# The lockfile owns versions.
+Bundler/GemVersion: { EnforcedStyle: forbidden }
 
 # Bundler requires a gem by its name, so the entry file keeps the gem's dash.
 Naming/FileName:
   Exclude:
     - lib/jspm-rails.rb
-
-# The lockfile owns versions.
-Bundler/GemVersion: { EnforcedStyle: forbidden }

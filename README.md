@@ -131,10 +131,17 @@ Propshaft rewrites the `url()`s in the stylesheet to digested paths, so the font
 
 **Plain jspm packages:** delete the package's entries from `config/importmap.json`, then run the install. jspm resolves it afresh.
 
-**To keep the map from drifting,** run the install in CI and fail on a diff:
+**To keep the map from drifting,** run the check in CI:
 
 ```sh
-bin/rails jspm:install && git diff --exit-code config/importmap.json vendor/jspm
+bin/rails jspm:check
+```
+
+It traces again without writing anything. It fails when an install would change `config/importmap.json`, for example after Dependabot bumps `package-lock.json`, or when a module is missing from `vendor/jspm`:
+
+```
+       stale  config/importmap.json
+         run  bin/rails jspm:install
 ```
 
 ## Warnings

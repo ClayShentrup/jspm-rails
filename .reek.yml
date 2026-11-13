@@ -1,0 +1,29 @@
+---
+detectors:
+  # A bang method doesn't need a safe twin that nothing calls.
+  MissingSafeMethod:
+    enabled: false
+
+  # We turn off RuboCop's size metrics, so we turn off Reek's too.
+  TooManyConstants:
+    enabled: false
+  TooManyInstanceVariables:
+    enabled: false
+  TooManyMethods: # Metrics/ClassLength
+    enabled: false
+  TooManyStatements: # Metrics/MethodLength, Metrics/AbcSize
+    enabled: false
+
+  # RuboCop already checks these.
+  BooleanParameter: # Style/OptionalBooleanParameter
+    enabled: false
+  ClassVariable: # Style/ClassVars
+    enabled: false
+  IrresponsibleModule: # Style/Documentation
+    enabled: false
+  LongParameterList: # Metrics/ParameterLists
+    enabled: false
+  UncommunicativeParameterName: # Naming/MethodParameterName
+    enabled: false
+  UnusedParameters: # Lint/UnusedMethodArgument
+    enabled: false

@@ -12,6 +12,8 @@ gem 'puma'
 gem 'rails'
 # Runs the gem's own tasks.
 gem 'rake'
+# Finds code smells RuboCop doesn't.
+gem 'reek'
 # The test framework.
 gem 'rspec-rails'
 # Lints the gem and its specs.
