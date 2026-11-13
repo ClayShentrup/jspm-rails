@@ -3,6 +3,7 @@
 require 'action_controller/railtie'
 require 'action_view/railtie'
 require 'jspm-rails'
+require_relative '../../engines/widget/lib/widget'
 require 'propshaft'
 require 'rails'
 

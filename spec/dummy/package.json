@@ -1,6 +1,7 @@
 {
   "private": true,
   "dependencies": {
+    "canvas-confetti": "^1.9.4",
     "katex": "^0.18.2",
     "tom-select": "^2.4.3"
   },

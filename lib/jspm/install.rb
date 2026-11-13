@@ -13,9 +13,9 @@ module Jspm
     PACKAGE_URL = %r{\Ahttps://ga\.jspm\.io/npm:(?<name>(?:@[^/]+/)?[^@/]+)@(?<version>[^/]+)/}
     private_constant :PACKAGE_URL, :SOURCE_MAP
 
-    def self.call(output:, root:)
+    def self.call(asset_paths:, output:, root:)
       lockfile = Lockfile.read(root)
-      trace = Trace.call(lockfile:, root:)
+      trace = Trace.call(asset_paths:, lockfile:, root:)
       new(lockfile:, output:, root:, trace:).call
     end
 

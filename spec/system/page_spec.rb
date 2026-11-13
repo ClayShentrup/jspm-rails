@@ -18,6 +18,14 @@ RSpec.describe 'a page using jspm-rails' do
       expect(page.get_by_text('Hello from a relative import')).to be_visible
     end
 
+    it 'runs a directory\'s index module, imported by the directory\'s name' do
+      expect(page.get_by_text('Themed by an index module')).to be_visible
+    end
+
+    it "runs a module from an engine's assets" do
+      expect(page.get_by_text('Hello from an engine')).to be_visible
+    end
+
     it 'runs a dependency spread across many vendored files' do
       expect(page.get_by_role('combobox', name: 'Flavor')).to be_visible
     end

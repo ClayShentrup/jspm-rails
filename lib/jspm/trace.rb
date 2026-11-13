@@ -9,15 +9,17 @@ module Jspm
 
   # What jspm's generator finds when it traces the app's entry module. The
   # previous import map locks versions, as in jspm, and package-lock.json's
-  # versions override it.
+  # versions override it. Modules on the asset path are importable by name.
   Trace =
     Data.define(:import_map, :urls) do
-      def self.call(lockfile:, root:)
-        import_map_file = root.join(Paths::IMPORT_MAP)
-        locked = import_map_file.exist? ? JSON.parse(import_map_file.read).except('preload') : {}
+      def self.call(asset_paths:, lockfile:, root:)
+        vendor_dir = root.join(Paths::VENDOR)
+        pathnames = asset_paths.map { |path| Pathname(path) }
+        module_paths = pathnames.reject { |path| path == vendor_dir }
+        local_modules = LocalModules.find(asset_paths: module_paths)
         input = JSON.generate(
           entry: Paths::ENTRY_PATH,
-          inputMap: locked,
+          inputMap: { imports: locked_versions(root).merge(local_modules.pins), scopes: {} },
           resolutions: lockfile.resolutions,
           root: root.to_s
         )
@@ -25,10 +27,40 @@ module Jspm
         json, status = Open3.capture2('node', script, stdin_data: input)
         raise(Error, "tracing #{Paths::ENTRY_PATH} failed") unless status.success?
 
-        result = JSON.parse(json)
-        import_map = result.fetch('map').merge('preload' => result.fetch('preload'))
-        urls = result.fetch('staticDeps') + result.fetch('dynamicDeps')
-        new(import_map:, urls:)
+        from_trace(JSON.parse(json), local_modules)
+      end
+
+      # Every jspm.io module the previous map named, keyed by its specifier.
+      # jspm keeps the versions of packages it finds there.
+      def self.locked_versions(root)
+        import_map_file = root.join(Paths::IMPORT_MAP)
+        return {} unless import_map_file.exist?
+
+        import_map = JSON.parse(import_map_file.read)
+        specifiers = [import_map.fetch('imports'), *import_map.fetch('scopes', {}).values]
+        specifiers.reduce(:merge).select { |_specifier, url| url.start_with?(Paths::CDN) }
+      end
+
+      def self.from_trace(result, local_modules)
+        localize = local_modules.method(:localize)
+        imports = result.fetch('imports').transform_values(&localize)
+        scopes = localize_scopes(result.fetch('scopes'), localize)
+        static = result.fetch('staticDeps').map(&localize)
+        dynamic = result.fetch('dynamicDeps').map(&localize)
+        new(
+          import_map: { 'imports' => imports, 'scopes' => scopes, 'preload' => static },
+          urls: static + dynamic
+        )
+      end
+
+      # Every local directory becomes the asset root, so their scopes merge.
+      def self.localize_scopes(scopes, localize)
+        pairs =
+          scopes.map do |scope, specifiers|
+            [localize.call(scope), specifiers.transform_values(&localize)]
+          end
+        grouped = pairs.group_by(&:first)
+        grouped.transform_values { |entries| entries.map(&:last).reduce(:merge) }
       end
 
       def cdn_urls
