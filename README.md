@@ -112,7 +112,7 @@ const { default: katex } = await import('katex')
 
 **Plain jspm works on its own.** The install resolves each package you import from jspm.io. That's the latest version, or the newest within a range you give in `package.json`'s `dependencies`, as jspm does. `config/importmap.json` is jspm's lockfile: every install keeps the versions it already holds.
 
-**Install a package with npm when you want more.** Its version in `package-lock.json` then overrides the import map, and you get:
+**Install a package with npm or Yarn 1 when you want more.** Its version in `package-lock.json` or `yarn.lock` then overrides the import map, and you get:
 
 - Dependabot pull requests for it.
 - Its stylesheets, fonts and images in `node_modules`, at the same version as its JavaScript.
@@ -247,7 +247,7 @@ Install the package with npm as a dependency, not a devDependency, and run the i
 ```sh
 bundle install
 npm ci && npx playwright install chromium
-(cd spec/dummy && npm ci) && (cd spec/fixtures/conflicted && npm ci)
+(cd spec/dummy && npm ci) && (cd spec/fixtures/conflicted && npm ci) && (cd spec/fixtures/yarn && yarn install --frozen-lockfile)
 bundle exec rake
 ```
 

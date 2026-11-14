@@ -34,6 +34,7 @@ updates:
     directories:
       - /spec/dummy
       - /spec/fixtures/conflicted
+      - /spec/fixtures/yarn
     schedule:
       interval: weekly
     cooldown:

@@ -3,7 +3,8 @@
 require 'json'
 
 module Jspm
-  # The packages npm installed, as package-lock.json records them.
+  # The packages npm or Yarn installed, as package-lock.json or yarn.lock
+  # records them.
   class Lockfile
     Package =
       Data.define(:dev, :name, :path, :top_level, :version) do
@@ -21,18 +22,25 @@ module Jspm
       end
     private_constant :Package
 
-    def self.read(root)
-      json = JSON.parse(root.join('package-lock.json').read)
-      installed = json.fetch('packages').reject { |path, _package| path.empty? }
-      packages =
+    class << self
+      def read(root)
+        packages = root.join('yarn.lock').exist? ? YarnLock.packages(root) : npm_packages(root)
+        new(packages: packages.map { |package| Package.new(**package) })
+      end
+
+      private
+
+      def npm_packages(root)
+        json = JSON.parse(root.join('package-lock.json').read)
+        installed = json.fetch('packages').reject { |path, _package| path.empty? }
         installed.map do |path, package|
           name = path.split('node_modules/').last
           top_level = path.scan('node_modules/').one?
           version = package.fetch('version')
           dev = package.fetch('dev', false)
-          Package.new(dev:, name:, path:, top_level:, version:)
+          { dev:, name:, path:, top_level:, version: }
         end
-      new(packages:)
+      end
     end
 
     def initialize(packages:)
