@@ -74,6 +74,35 @@ RSpec.describe Jspm::Install do
     expect(dummy.join('vendor/jspm/normalize.css')).not_to exist
   end
 
+  context 'when the app installs with Yarn' do
+    let!(:yarn_app) { FixtureApp.copy('yarn') }
+    let(:import_map) { JSON.parse(yarn_app.join('config/importmap.json').read) }
+
+    before do
+      described_class.call(
+        asset_paths: [yarn_app.join('app/javascript')],
+        output: StringIO.new,
+        root: yarn_app
+      )
+    end
+
+    after { FileUtils.rm_rf(yarn_app) }
+
+    it 'maps each import to the version in yarn.lock' do
+      expect(import_map.fetch('imports')).to include(
+        'tom-select' => 'https://ga.jspm.io/npm:tom-select@2.4.3/dist/esm/tom-select.complete.js'
+      )
+    end
+
+    it "copies the dependencies' stylesheets" do
+      expect(yarn_app.join('vendor/jspm/tom-select/dist/css/tom-select.css')).to be_file
+    end
+
+    it "leaves out devDependencies' assets" do
+      expect(yarn_app.join('vendor/jspm/normalize.css')).not_to exist
+    end
+  end
+
   context 'when package-lock.json disagrees with itself' do
     let(:output) { StringIO.new }
 
