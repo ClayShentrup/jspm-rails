@@ -1,6 +1,10 @@
 # Changelog
 
-## 0.3.1 (unreleased)
+## 0.4.0 (unreleased)
+
+- `javascript_jspm_entry_tags('admin')` loads another module in `app/javascript` as the entry.
+
+## 0.3.1 (2026-11-13)
 
 - Fixes a `KeyError` when jspm scopes dependencies at the filesystem root.
 
