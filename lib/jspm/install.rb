@@ -5,22 +5,20 @@ require 'json'
 require 'net/http'
 
 module Jspm
-  # Vendors every module the trace reaches from jspm.io, copies npm
-  # dependencies' stylesheets, fonts and images, and writes
+  # Vendors every module the trace reaches from jspm.io, and writes
   # config/importmap.json.
   class Install
     SOURCE_MAP = %r{//# sourceMappingURL=(?<path>\S+\.map)\s*\z}
     PACKAGE_URL = %r{\Ahttps://ga\.jspm\.io/npm:(?<name>(?:@[^/]+/)?[^@/]+)@(?<version>[^/]+)/}
     private_constant :PACKAGE_URL, :SOURCE_MAP
 
-    def self.call(asset_directories:, asset_paths:, output:, root:)
+    def self.call(asset_paths:, output:, root:)
       lockfile = Lockfile.read(root)
       trace = Trace.call(asset_paths:, lockfile:, root:)
-      new(asset_directories:, lockfile:, output:, root:, trace:).call
+      new(lockfile:, output:, root:, trace:).call
     end
 
-    def initialize(asset_directories:, lockfile:, output:, root:, trace:)
-      @asset_directories = asset_directories
+    def initialize(lockfile:, output:, root:, trace:)
       @lockfile = lockfile
       @output = output
       @root = root
@@ -33,23 +31,17 @@ module Jspm
       cdn = URI(Paths::CDN)
       cdn_urls = trace.cdn_urls
       Net::HTTP.start(cdn.host, cdn.port, use_ssl: true) { |http| download_all(http, cdn_urls, vendor_dir) }
-      copies = Assets.copies(directories: asset_directories, root:)
-      copies.each do |source, target|
-        target.dirname.mkpath
-        FileUtils.cp(source, target)
-      end
       root.join(Paths::IMPORT_MAP).write("#{JSON.pretty_generate(trace.import_map)}\n")
 
       report('traced', Paths::ENTRY_PATH)
       report('vendored', "#{cdn_urls.size} modules from ga.jspm.io")
-      report('copied', "#{copies.size} assets from node_modules")
       report('wrote', Paths::IMPORT_MAP)
       warn_about_versions
     end
 
     private
 
-    attr_reader :asset_directories, :lockfile, :output, :root, :trace
+    attr_reader :lockfile, :output, :root, :trace
 
     def download_all(http, urls, vendor_dir)
       urls.each { |url| download(http, url, vendor_dir) }

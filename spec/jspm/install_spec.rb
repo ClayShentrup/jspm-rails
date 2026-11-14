@@ -14,7 +14,6 @@ RSpec.describe Jspm::Install do
       [
         "      traced  ./app/javascript/application.js\n",
         "    vendored  32 modules from ga.jspm.io\n",
-        "      copied  64 assets from node_modules\n",
         "       wrote  config/importmap.json\n"
       ]
     )
@@ -72,23 +71,12 @@ RSpec.describe Jspm::Install do
     )
   end
 
-  it "copies a listed package's fonts" do
-    font = dummy.join('vendor/jspm/katex/dist/fonts/KaTeX_Main-Regular.woff2')
-
-    expect(font).to be_file
-  end
-
-  it "leaves out the assets of packages the app didn't list" do
-    expect(dummy.join('vendor/jspm/tom-select')).not_to exist
-  end
-
   context 'when the app installs with Yarn' do
     let!(:yarn_app) { FixtureApp.copy('yarn') }
     let(:import_map) { JSON.parse(yarn_app.join('config/importmap.json').read) }
 
     before do
       described_class.call(
-        asset_directories: %w[tom-select],
         asset_paths: [yarn_app.join('app/javascript')],
         output: StringIO.new,
         root: yarn_app
@@ -109,7 +97,6 @@ RSpec.describe Jspm::Install do
 
     before do
       described_class.call(
-        asset_directories: %w[tom-select],
         asset_paths:,
         output:,
         root: conflicted
@@ -136,7 +123,6 @@ RSpec.describe Jspm::Install do
       }
       conflicted.join('config/importmap.json').write(JSON.generate(locked))
       described_class.call(
-        asset_directories: %w[tom-select],
         asset_paths:,
         output: StringIO.new,
         root: conflicted
@@ -162,7 +148,6 @@ RSpec.describe Jspm::Install do
       stale.dirname.mkpath
       stale.write('')
       described_class.call(
-        asset_directories: %w[tom-select],
         asset_paths:,
         output: StringIO.new,
         root: conflicted
@@ -181,7 +166,6 @@ RSpec.describe Jspm::Install do
       install =
         lambda {
           described_class.call(
-            asset_directories: %w[tom-select],
             asset_paths: [untraceable.join('app/javascript')],
             output: StringIO.new,
             root: untraceable
