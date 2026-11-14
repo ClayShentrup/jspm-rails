@@ -9,7 +9,7 @@ require 'rails'
 
 module Dummy
   # Lets the system specs serve assets from a second origin, the way a CDN
-  # does. Browsers load cross-origin modules and fonts only with this header.
+  # does. Browsers load cross-origin modules only with this header.
   class CrossOriginAssets
     def initialize(app)
       @app = app

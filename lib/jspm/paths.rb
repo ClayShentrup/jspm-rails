@@ -12,7 +12,8 @@ module Jspm
     ENTRY_PATH = "#{LOCAL}#{ENTRY}".freeze
     IMPORT_MAP = 'config/importmap.json'
     VENDOR = 'vendor/jspm'
-    public_constant :CDN, :ENTRY, :ENTRY_PATH, :IMPORT_MAP, :LOCAL, :VENDOR
+    public_constant :CDN, :ENTRY, :ENTRY_PATH, :IMPORT_MAP, :VENDOR
+    private_constant :LOCAL
 
     def self.logical(url)
       return url.delete_prefix('https://').sub('/npm:', '/npm/') if url.start_with?(CDN)

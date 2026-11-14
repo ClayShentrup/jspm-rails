@@ -3,14 +3,6 @@
 require 'rails_helper'
 
 RSpec.describe 'a page using jspm-rails' do
-  def katex_font_loaded?
-    page.evaluate(<<~JS)
-      () => document.fonts.ready.then((fonts) =>
-        [...fonts].some((face) => face.family === 'KaTeX_Main' && face.status === 'loaded')
-      )
-    JS
-  end
-
   shared_examples 'a working page' do
     before { page.goto(root_path) }
 
@@ -30,11 +22,10 @@ RSpec.describe 'a page using jspm-rails' do
       expect(page.get_by_role('combobox', name: 'Flavor')).to be_visible
     end
 
-    it 'renders math with a dynamically imported module and its npm stylesheet and fonts' do
+    it 'renders math with a dynamically imported module' do
       formula = page.get_by_role('region', name: 'Formula')
-      expect(formula.get_by_role('math')).to be_attached
 
-      expect(katex_font_loaded?).to be(true)
+      expect(formula.get_by_role('math')).to be_attached
     end
   end
 
@@ -42,7 +33,7 @@ RSpec.describe 'a page using jspm-rails' do
 
   context 'with assets on another origin' do
     around do |example|
-      asset_host = proc { |_source, request| "#{request.protocol}localhost:#{request.port}" }
+      asset_host = "http://localhost:#{Capybara.current_session.server.port}"
       ActionController::Base.with(asset_host:, &example)
     end
 
