@@ -1,10 +1,4 @@
-```
-   _                                   _  _
-  (_) ___ _ __  _ __        _ _  __ _ (_)| | ___
-  | |(_-<| '_ \| '  \  ___ | '_|/ _` || || |(_-<
- _/ |/__/| .__/|_|_|_||___||_|  \__,_||_||_|/__/
-|__/     |_|
-```
+<p align="center"><img src="docs/banner.svg" alt="jspm-rails" width="576"></p>
 
 [![CI](https://github.com/ClayShentrup/jspm-rails/actions/workflows/ci.yml/badge.svg)](https://github.com/ClayShentrup/jspm-rails/actions/workflows/ci.yml)
 

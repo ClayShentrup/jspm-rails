@@ -7,3 +7,4 @@ node_modules/
 /spec/dummy/vendor/jspm/
 /spec/fixtures/*/config/importmap.json
 /spec/fixtures/*/vendor/jspm/
+*.gem
