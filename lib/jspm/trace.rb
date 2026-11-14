@@ -21,8 +21,14 @@ module Jspm
         # A package the app installed beats a gem's file of the same name, such
         # as actiontext's trix.js, so the app and its packages share one copy.
         pins = local_modules.pins.reject { |name, _path| resolutions.key?(name) }
+        # Every app module is traced and named in the map, as importmap-rails
+        # pins them, so code can import one by a name it computes, the way
+        # stimulus-rails's eagerLoadControllersFrom does.
+        app_dir = root.join('app/javascript').to_s
+        app_modules = pins.select { |_name, path| path.start_with?(app_dir) }
+                          .keys
         input = JSON.generate(
-          entry: Paths::ENTRY_PATH,
+          entries: [Paths::ENTRY_PATH, *app_modules],
           inputMap: { imports: locked_versions(root).merge(pins), scopes: {} },
           resolutions:,
           root: root.to_s

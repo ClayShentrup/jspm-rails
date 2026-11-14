@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.0 (unreleased)
+
+- Names every module in `app/javascript` in the import map, so stimulus-rails's `eagerLoadControllersFrom` finds controllers.
+
 ## 0.2.0 (unreleased)
 
 - Reads Yarn 1's `yarn.lock` as well as `package-lock.json`.

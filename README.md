@@ -89,6 +89,8 @@ import 'controllers'                    // app/javascript/controllers/index.js
 import { helper } from './helpers.js'
 ```
 
+**Every module in `app/javascript` is in the import map by name,** even ones nothing imports directly, as importmap-rails's `pin_all_from` names them. So stimulus-rails's `eagerLoadControllersFrom("controllers", application)` and `lazyLoadControllersFrom` work unchanged.
+
 **Import modules that gems ship the same way.** Every engine's `app/assets` directories are on Propshaft's load path, so a gem's modules are importable by asset name with no setup:
 
 ```js
