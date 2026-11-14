@@ -27,7 +27,6 @@ module Dummy
     config.eager_load = false
     config.secret_key_base = 'dummy'
     config.logger = Logger.new(nil)
-    config.jspm.asset_directories = %w[katex/dist]
     config.middleware.insert_before(ActionDispatch::Executor, CrossOriginAssets)
   end
 end

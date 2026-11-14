@@ -22,7 +22,6 @@ RSpec.describe Jspm::Check do
   context 'when package-lock.json moved on since the install' do
     before do
       Jspm::Install.call(
-        asset_directories: %w[tom-select],
         asset_paths:,
         output: StringIO.new,
         root: conflicted
@@ -32,7 +31,6 @@ RSpec.describe Jspm::Check do
 
     it 'fails, and says to install' do
       passed = described_class.call(
-        asset_directories: %w[tom-select],
         asset_paths:,
         output:,
         root: conflicted
@@ -50,41 +48,9 @@ RSpec.describe Jspm::Check do
     end
   end
 
-  context "when a package's stylesheet changed since the install" do
-    before do
-      Jspm::Install.call(
-        asset_directories: %w[tom-select],
-        asset_paths:,
-        output: StringIO.new,
-        root: conflicted
-      )
-      conflicted.join('vendor/jspm/tom-select/dist/css/tom-select.css').write('')
-    end
-
-    it 'fails, and names the stylesheet' do
-      passed = described_class.call(
-        asset_directories: %w[tom-select],
-        asset_paths:,
-        output:,
-        root: conflicted
-      )
-
-      aggregate_failures do
-        expect(output.string.lines).to eq(
-          [
-            "       stale  vendor/jspm/tom-select/dist/css/tom-select.css\n",
-            "         run  bin/rails jspm:install\n"
-          ]
-        )
-        expect(passed).to be(false)
-      end
-    end
-  end
-
   context 'when a vendored module is gone' do
     before do
       Jspm::Install.call(
-        asset_directories: %w[tom-select],
         asset_paths:,
         output: StringIO.new,
         root: conflicted
@@ -94,7 +60,6 @@ RSpec.describe Jspm::Check do
 
     it 'fails, and names the module' do
       passed = described_class.call(
-        asset_directories: %w[tom-select],
         asset_paths:,
         output:,
         root: conflicted

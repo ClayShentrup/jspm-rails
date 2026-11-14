@@ -19,7 +19,6 @@ bin/rails jspm:install
 ```
       traced  ./app/javascript/application.js
     vendored  31 modules from ga.jspm.io
-      copied  64 assets from node_modules
        wrote  config/importmap.json
 ```
 
@@ -121,24 +120,19 @@ Mix the two freely. A package's JavaScript always comes from jspm.io either way.
 
 ## Stylesheets, fonts and images
 
-jspm.io serves JavaScript. For a package's other files, install it with npm and name the directory that holds them:
+jspm.io serves JavaScript. For a package's other files, install it with npm and put the directory that holds them on Propshaft's load path, as Rails's generated `config/initializers/assets.rb` suggests:
 
 ```ruby
-# config/application.rb
-config.jspm.asset_directories = %w[katex/dist bootstrap-icons/font]
+Rails.application.config.assets.paths << Rails.root.join('node_modules/katex/dist')
 ```
-
-The install copies the stylesheets, fonts and images in each directory into `vendor/jspm`, under the same path:
 
 ```erb
-<%= stylesheet_link_tag 'katex/dist/katex' %>
+<%= stylesheet_link_tag 'katex' %>
 ```
 
-Propshaft rewrites the `url()`s in the stylesheet to digested paths, so the fonts load too. The CSS comes from npm and the JavaScript from jspm.io, both at the version in your lockfile. Each name starts with its package, so two packages' `style.css` never collide.
+Propshaft rewrites the `url()`s in the stylesheet to digested paths, so the fonts load too. The CSS comes from npm and the JavaScript from jspm.io, both at the version in your lockfile.
 
-Name the directory you use, not the whole package. `bootstrap-icons/font` holds 7 files, while the package holds 2,089, most of them SVG icons.
-
-Why copy, instead of putting `node_modules` on the load path? Propshaft checks every file on its load path for changes before each request in development. With one real app's `node_modules` (8,900 files), that took a page request from 1.4 ms to 98 ms. Production would also precompile all of `node_modules` into `public/assets`.
+Add the directory you use, not the whole package or all of `node_modules`. Propshaft checks every file on its load path before each development request and precompiles every one, so `bootstrap-icons/font` (7 files) costs far less than the package (2,089).
 
 ## Keeping up to date
 
@@ -152,7 +146,7 @@ Why copy, instead of putting `node_modules` on the load path? Propshaft checks e
 bin/rails jspm:check
 ```
 
-It traces again without writing anything. It fails when an install would change `config/importmap.json`, for example after Dependabot bumps `package-lock.json`. It also fails when a module is missing from `vendor/jspm`, or a copied stylesheet, font or image no longer matches `node_modules`:
+It traces again without writing anything. It fails when an install would change `config/importmap.json`, for example after Dependabot bumps `package-lock.json`. It also fails when a module is missing from `vendor/jspm`:
 
 ```
        stale  config/importmap.json
@@ -172,7 +166,7 @@ npm installs two versions of a package when its dependents' ranges don't overlap
 ## Deploying
 
 - **Commit `config/importmap.json` and `vendor/jspm`.** `assets:precompile` digests the vendored modules like any other asset.
-- **Production needs no Node, no npm and no jspm.io.**
+- **Production needs no jspm.io,** and no Node unless you serve stylesheets from `node_modules`, which needs your packages installed before precompiling.
 - **An `asset_host` on another origin must send `Access-Control-Allow-Origin`.** Browsers load modules and fonts across origins only with CORS.
 - **Content Security Policy works.** Every tag carries the request's nonce.
 - **Turbo reloads the page when the import map changes,** because the map's tag has `data-turbo-track="reload"`.
@@ -183,8 +177,7 @@ npm installs two versions of a package when its dependents' ranges don't overlap
 
 1. Boots the app, then traces `app/javascript/application.js` with [`@jspm/generator`](https://github.com/jspm/generator). Every module on Propshaft's load path is importable by asset name. The previous `config/importmap.json` locks versions, and `package-lock.json` pins every package npm installed. Only packages your code reaches end up in the map, so KaTeX's command-line dependency stays out.
 2. Downloads each traced module from jspm.io, with its source map, into `vendor/jspm/ga.jspm.io`.
-3. Copies the stylesheets, fonts and images in each of `config.jspm.asset_directories` into `vendor/jspm`.
-4. Writes jspm's import map to `config/importmap.json`, with the list of modules to preload. Local modules appear as `asset:` plus their logical path, such as `asset:astrology/math_controller.js`, so the map is the same on every machine.
+3. Writes jspm's import map to `config/importmap.json`, with the list of modules to preload. Local modules appear as `asset:` plus their logical path, such as `asset:astrology/math_controller.js`, so the map is the same on every machine.
 
 `javascript_jspm_tags` renders that map for Propshaft. Propshaft serves each file under a digested name, so the helper rewrites the map's URLs:
 
@@ -247,7 +240,7 @@ Node printed the reason just above. Usually Node isn't on your `PATH`, or `@jspm
 The asset host must send `Access-Control-Allow-Origin`. See [Deploying](#deploying).
 
 **A package's stylesheet raises `Propshaft::MissingAssetError`**
-Add its directory to `config.jspm.asset_directories` and run the install. See [Stylesheets, fonts and images](#stylesheets-fonts-and-images).
+Add its directory to `config.assets.paths`. See [Stylesheets, fonts and images](#stylesheets-fonts-and-images).
 
 ## Development
 
