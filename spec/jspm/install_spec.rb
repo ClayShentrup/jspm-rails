@@ -44,6 +44,14 @@ RSpec.describe Jspm::Install do
     expect(import_map.fetch('imports')).to include('widget/badge' => 'asset:widget/badge.js')
   end
 
+  it "resolves an installed package over an engine's file of the same name" do
+    import_map = JSON.parse(dummy.join('config/importmap.json').read)
+
+    expect(import_map.fetch('scopes').fetch('asset:')).to include(
+      'canvas-confetti' => 'https://ga.jspm.io/npm:canvas-confetti@1.9.4/dist/confetti.module.mjs'
+    )
+  end
+
   it 'vendors modules the entry imports dynamically' do
     katex = dummy.join('vendor/jspm/ga.jspm.io/npm/katex@0.18.2/dist/katex.mjs')
 
