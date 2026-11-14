@@ -68,6 +68,13 @@ bin/rails jspm:install
 git add config/importmap.json vendor/jspm
 ```
 
+To have GitHub collapse those generated files in pull requests, mark them in `.gitattributes`:
+
+```
+config/importmap.json linguist-generated
+vendor/jspm/** linguist-generated
+```
+
 Reload the page.
 
 ## Writing your JavaScript
