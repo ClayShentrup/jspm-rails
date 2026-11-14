@@ -5,6 +5,11 @@ require 'rails/railtie'
 module Jspm
   # Serves the app's modules and the vendored dependencies through Propshaft.
   class Railtie < Rails::Railtie
+    config.jspm = ActiveSupport::OrderedOptions.new
+    # Directories in node_modules, such as 'katex/dist', whose stylesheets, fonts
+    # and images the install copies.
+    config.jspm.asset_directories = []
+
     # jspm.io publishes many packages' modules as .mjs, and browsers only run
     # a module script served with a JavaScript MIME type.
     initializer 'jspm.mime_type' do

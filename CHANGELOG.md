@@ -3,6 +3,7 @@
 ## 0.2.0 (unreleased)
 
 - Reads Yarn 1's `yarn.lock` as well as `package-lock.json`.
+- Copies stylesheets, fonts and images only from the `node_modules` directories named in `config.jspm.asset_directories`, instead of from every dependency.
 
 ## 0.1.0 (2026-11-13)
 

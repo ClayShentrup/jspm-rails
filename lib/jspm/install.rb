@@ -13,13 +13,14 @@ module Jspm
     PACKAGE_URL = %r{\Ahttps://ga\.jspm\.io/npm:(?<name>(?:@[^/]+/)?[^@/]+)@(?<version>[^/]+)/}
     private_constant :PACKAGE_URL, :SOURCE_MAP
 
-    def self.call(asset_paths:, output:, root:)
+    def self.call(asset_directories:, asset_paths:, output:, root:)
       lockfile = Lockfile.read(root)
       trace = Trace.call(asset_paths:, lockfile:, root:)
-      new(lockfile:, output:, root:, trace:).call
+      new(asset_directories:, lockfile:, output:, root:, trace:).call
     end
 
-    def initialize(lockfile:, output:, root:, trace:)
+    def initialize(asset_directories:, lockfile:, output:, root:, trace:)
+      @asset_directories = asset_directories
       @lockfile = lockfile
       @output = output
       @root = root
@@ -32,7 +33,7 @@ module Jspm
       cdn = URI(Paths::CDN)
       cdn_urls = trace.cdn_urls
       Net::HTTP.start(cdn.host, cdn.port, use_ssl: true) { |http| download_all(http, cdn_urls, vendor_dir) }
-      copies = Assets.copies(lockfile:, root:)
+      copies = Assets.copies(directories: asset_directories, root:)
       copies.each do |source, target|
         target.dirname.mkpath
         FileUtils.cp(source, target)
@@ -48,7 +49,7 @@ module Jspm
 
     private
 
-    attr_reader :lockfile, :output, :root, :trace
+    attr_reader :asset_directories, :lockfile, :output, :root, :trace
 
     def download_all(http, urls, vendor_dir)
       urls.each { |url| download(http, url, vendor_dir) }

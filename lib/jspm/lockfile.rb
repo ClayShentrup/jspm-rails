@@ -7,11 +7,7 @@ module Jspm
   # records them.
   class Lockfile
     Package =
-      Data.define(:dev, :name, :path, :top_level, :version) do
-        def browser?
-          top_level && !dev
-        end
-
+      Data.define(:name, :top_level, :version) do
         def resolution
           [name, version]
         end
@@ -37,8 +33,7 @@ module Jspm
           name = path.split('node_modules/').last
           top_level = path.scan('node_modules/').one?
           version = package.fetch('version')
-          dev = package.fetch('dev', false)
-          { dev:, name:, path:, top_level:, version: }
+          { name:, top_level:, version: }
         end
       end
     end
@@ -49,10 +44,6 @@ module Jspm
 
     def resolutions
       packages.select(&:top_level).to_h(&:resolution)
-    end
-
-    def browser_packages
-      packages.select(&:browser?)
     end
 
     def nested_versions(name)
