@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="576" height="113" viewBox="0 0 576 113" role="img" aria-label="jspm-rails">
+  <title>jspm-rails</title>
+  <defs>
+    <linearGradient id="brand" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0" stop-color="#e8b400"/>
+      <stop offset="0.55" stop-color="#e5602a"/>
+      <stop offset="1" stop-color="#cc0000"/>
+    </linearGradient>
+  </defs>
+  <text font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="18" font-weight="bold" fill="url(#brand)" xml:space="preserve">
+    <tspan x="4" dy="18">   _                                   _  _</tspan>
+    <tspan x="4" dy="20.7">  (_) ___ _ __  _ __        _ _  __ _ (_)| | ___</tspan>
+    <tspan x="4" dy="20.7">  | |(_-&lt;| &#x27;_ \| &#x27;  \  ___ | &#x27;_|/ _` || || |(_-&lt;</tspan>
+    <tspan x="4" dy="20.7"> _/ |/__/| .__/|_|_|_||___||_|  \__,_||_||_|/__/</tspan>
+    <tspan x="4" dy="20.7">|__/     |_|</tspan>
+  </text>
+</svg>
