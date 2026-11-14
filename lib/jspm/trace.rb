@@ -17,10 +17,14 @@ module Jspm
         pathnames = asset_paths.map { |path| Pathname(path) }
         module_paths = pathnames.reject { |path| path == vendor_dir }
         local_modules = LocalModules.find(asset_paths: module_paths)
+        resolutions = lockfile.resolutions
+        # A package the app installed beats a gem's file of the same name, such
+        # as actiontext's trix.js, so the app and its packages share one copy.
+        pins = local_modules.pins.reject { |name, _path| resolutions.key?(name) }
         input = JSON.generate(
           entry: Paths::ENTRY_PATH,
-          inputMap: { imports: locked_versions(root).merge(local_modules.pins), scopes: {} },
-          resolutions: lockfile.resolutions,
+          inputMap: { imports: locked_versions(root).merge(pins), scopes: {} },
+          resolutions:,
           root: root.to_s
         )
         script = File.expand_path('trace.mjs', __dir__)
