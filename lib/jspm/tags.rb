@@ -9,7 +9,7 @@ module Jspm
   # imports name its siblings undigested. So the rendered map also sends each
   # undigested module URL to its digested one.
   class Tags
-    MODULE_EXTENSIONS = %w[.css .js .mjs].freeze
+    MODULE_EXTENSIONS = %w[.js .mjs].freeze
     private_constant :MODULE_EXTENSIONS
 
     def self.call(view:)
