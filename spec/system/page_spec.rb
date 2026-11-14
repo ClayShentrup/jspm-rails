@@ -35,6 +35,12 @@ RSpec.describe 'a page using jspm-rails' do
 
   it_behaves_like 'a working page'
 
+  it 'loads another entry module on a layout that names it' do
+    page.goto('/admin')
+
+    expect(page.get_by_text('Hello from a relative import, in admin')).to be_visible
+  end
+
   context 'with assets on another origin' do
     around do |example|
       asset_host = "http://localhost:#{Capybara.current_session.server.port}"

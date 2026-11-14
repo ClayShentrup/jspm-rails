@@ -12,11 +12,12 @@ module Jspm
     MODULE_EXTENSIONS = %w[.js .mjs].freeze
     private_constant :MODULE_EXTENSIONS
 
-    def self.call(view:)
+    def self.call(entry:, view:)
       import_map = JSON.parse(Rails.root.join(Paths::IMPORT_MAP).read)
       load_path = Rails.application.assets.load_path
-      entry_url = view.asset_path(Paths::ENTRY)
-      digested_entry = load_path.find(Paths::ENTRY).digested_path.to_s
+      entry_path = "#{entry}.js"
+      entry_url = view.asset_path(entry_path)
+      digested_entry = load_path.find(entry_path).digested_path.to_s
       prefix = entry_url.delete_suffix(digested_entry)
       new(entry_url:, import_map:, load_path:, prefix:, view:).call
     end

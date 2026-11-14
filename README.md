@@ -79,7 +79,7 @@ Reload the page.
 
 ## Writing your JavaScript
 
-**The entry point is `app/javascript/application.js`.** `javascript_jspm_tags` loads it as a module, and the install traces everything it imports.
+**The entry point is `app/javascript/application.js`.** `javascript_jspm_tags` loads it as a module, and the install traces everything it imports. For a layout that needs a different entry, see the [FAQ](#faq).
 
 **Import packages by name,** as their documentation shows:
 
@@ -223,7 +223,7 @@ Not with jspm-rails, which doesn't transpile. Use jsbundling-rails.
 Safari doesn't support CSS module scripts yet, so link stylesheets with `stylesheet_link_tag`.
 
 **Can I have more than one entry point?**
-Not yet. Import everything from `application.js`, dynamically for code only some pages need.
+Yes. A layout whose pages need different code loads `app/javascript/admin.js` with `javascript_jspm_entry_tags('admin')`. The install traces every module in `app/javascript`, so any of them can be an entry.
 
 **Can I use it alongside importmap-rails?**
 Use one or the other. Both render the page's import map.
