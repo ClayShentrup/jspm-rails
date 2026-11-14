@@ -56,7 +56,7 @@ module Jspm
     # jspm.io URL stays as it is.
     def localize(target)
       case target
-      when %r{\A/.*/\z} then SCHEME
+      when %r{\A/(?:.*/)?\z} then SCHEME
       when %r{\A/} then modules_by_path.fetch(target).asset_name
       else target
       end
