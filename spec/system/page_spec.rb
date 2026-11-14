@@ -34,7 +34,7 @@ RSpec.describe 'a page using jspm-rails' do
   context 'with assets on another origin' do
     around do |example|
       asset_host = "http://localhost:#{Capybara.current_session.server.port}"
-      ActionController::Base.with(asset_host:, &example)
+      ActionController::Base.with(asset_host:) { example.run }
     end
 
     it_behaves_like 'a working page'
