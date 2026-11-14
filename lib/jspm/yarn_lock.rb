@@ -3,41 +3,24 @@
 require 'json'
 
 module Jspm
-  # Reads Yarn 1's yarn.lock. Unlike package-lock.json, it records neither
-  # where each package sits in node_modules nor which ones only development
-  # needs. A package locked at one version is the top-level one. When Yarn
-  # locked several versions, the one node_modules holds at its top level is.
-  # A package is a development one unless the dependencies in package.json
-  # reach it.
+  # Reads Yarn 1's yarn.lock. Unlike package-lock.json, it doesn't record
+  # where each package sits in node_modules. A package locked at one version
+  # is the top-level one. When Yarn locked several versions, the one
+  # node_modules holds at its top level is.
   module YarnLock
-    Entry =
-      Data.define(:dependencies, :name, :specs, :version) do
-        def keyed_by_spec
-          specs.map { |spec| [spec, self] }
-        end
-
-        def dependency_specs
-          dependencies.map { |name, range| "#{name}@#{range}" }
-        end
-      end
+    Entry = Data.define(:name, :version)
     private_constant :Entry
-
-    DEPENDENCY = /\A {4}"?(?<name>[^"\s]+)"? "?(?<range>[^"]+)"?\z/
-    private_constant :DEPENDENCY
 
     class << self
       def packages(root)
         entries = parse(root.join('yarn.lock').read)
-        manifest = JSON.parse(root.join('package.json').read)
-        runtime = reachable(manifest.fetch('dependencies', {}), entries)
-        locked_once = entries.map(&:name).tally.select { |_name, count| count == 1 }
-                             .keys
+        counts = entries.map(&:name).tally
         entries.map do |entry|
           name = entry.name
           version = entry.version
-          path = "node_modules/#{name}"
-          top_level = locked_once.include?(name) || installed_version(root.join(path)) == version
-          { dev: !runtime.include?(entry), name:, path:, top_level:, version: }
+          locked_once = counts.fetch(name) == 1
+          installed = installed_version(root.join('node_modules', name)) == version
+          { name:, top_level: locked_once || installed, version: }
         end
       end
 
@@ -58,27 +41,9 @@ module Jspm
 
       def parse_entry(block)
         header, *body = block.lines(chomp: true)
-        specs = header.delete_suffix(':').split(', ').map { |spec| spec.delete('"') }
-        name = specs.first.rpartition('@').first
+        spec = header.delete_suffix(':').split(', ').first.delete('"')
         version = body.find { |line| line.start_with?('  version ') }[/"(.*)"/, 1]
-        dependencies =
-          body.grep(DEPENDENCY) do |line|
-            line.match(DEPENDENCY).values_at(:name, :range)
-          end
-        Entry.new(dependencies:, name:, specs:, version:)
-      end
-
-      def reachable(roots, entries)
-        by_spec = entries.flat_map(&:keyed_by_spec).to_h
-        queue = roots.map { |name, range| "#{name}@#{range}" }
-        seen = Set.new
-        until queue.empty?
-          entry = by_spec.fetch(queue.shift)
-          next unless seen.add?(entry)
-
-          queue.concat(entry.dependency_specs)
-        end
-        seen
+        Entry.new(name: spec.rpartition('@').first, version:)
       end
     end
   end

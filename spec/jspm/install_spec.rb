@@ -14,7 +14,7 @@ RSpec.describe Jspm::Install do
       [
         "      traced  ./app/javascript/application.js\n",
         "    vendored  32 modules from ga.jspm.io\n",
-        "      copied  73 assets from node_modules\n",
+        "      copied  64 assets from node_modules\n",
         "       wrote  config/importmap.json\n"
       ]
     )
@@ -64,14 +64,14 @@ RSpec.describe Jspm::Install do
     )
   end
 
-  it "copies each npm dependency's fonts" do
+  it "copies a listed package's fonts" do
     font = dummy.join('vendor/jspm/katex/dist/fonts/KaTeX_Main-Regular.woff2')
 
     expect(font).to be_file
   end
 
-  it "leaves out devDependencies' assets" do
-    expect(dummy.join('vendor/jspm/normalize.css')).not_to exist
+  it "leaves out the assets of packages the app didn't list" do
+    expect(dummy.join('vendor/jspm/tom-select')).not_to exist
   end
 
   context 'when the app installs with Yarn' do
@@ -80,6 +80,7 @@ RSpec.describe Jspm::Install do
 
     before do
       described_class.call(
+        asset_directories: %w[tom-select],
         asset_paths: [yarn_app.join('app/javascript')],
         output: StringIO.new,
         root: yarn_app
@@ -93,20 +94,19 @@ RSpec.describe Jspm::Install do
         'tom-select' => 'https://ga.jspm.io/npm:tom-select@2.4.3/dist/esm/tom-select.complete.js'
       )
     end
-
-    it "copies the dependencies' stylesheets" do
-      expect(yarn_app.join('vendor/jspm/tom-select/dist/css/tom-select.css')).to be_file
-    end
-
-    it "leaves out devDependencies' assets" do
-      expect(yarn_app.join('vendor/jspm/normalize.css')).not_to exist
-    end
   end
 
   context 'when package-lock.json disagrees with itself' do
     let(:output) { StringIO.new }
 
-    before { described_class.call(asset_paths:, output:, root: conflicted) }
+    before do
+      described_class.call(
+        asset_directories: %w[tom-select],
+        asset_paths:,
+        output:,
+        root: conflicted
+      )
+    end
 
     it 'warns about each version it could not honor' do
       expect(output.string.lines.last).to eq(
@@ -127,7 +127,12 @@ RSpec.describe Jspm::Install do
         }
       }
       conflicted.join('config/importmap.json').write(JSON.generate(locked))
-      described_class.call(asset_paths:, output: StringIO.new, root: conflicted)
+      described_class.call(
+        asset_directories: %w[tom-select],
+        asset_paths:,
+        output: StringIO.new,
+        root: conflicted
+      )
     end
 
     it 'keeps the version of a package npm never installed' do
@@ -148,7 +153,12 @@ RSpec.describe Jspm::Install do
       stale = conflicted.join('vendor/jspm/stale.js')
       stale.dirname.mkpath
       stale.write('')
-      described_class.call(asset_paths:, output: StringIO.new, root: conflicted)
+      described_class.call(
+        asset_directories: %w[tom-select],
+        asset_paths:,
+        output: StringIO.new,
+        root: conflicted
+      )
     end
 
     it 'removes them' do
@@ -163,6 +173,7 @@ RSpec.describe Jspm::Install do
       install =
         lambda {
           described_class.call(
+            asset_directories: %w[tom-select],
             asset_paths: [untraceable.join('app/javascript')],
             output: StringIO.new,
             root: untraceable

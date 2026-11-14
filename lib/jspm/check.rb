@@ -7,14 +7,14 @@ module Jspm
   # Traces again without writing anything, and reports whether
   # config/importmap.json and vendor/jspm match what an install would produce.
   class Check
-    def self.call(asset_paths:, output:, root:)
+    def self.call(asset_directories:, asset_paths:, output:, root:)
       lockfile = Lockfile.read(root)
       trace = Trace.call(asset_paths:, lockfile:, root:)
-      new(lockfile:, output:, root:, trace:).call
+      new(asset_directories:, output:, root:, trace:).call
     end
 
-    def initialize(lockfile:, output:, root:, trace:)
-      @lockfile = lockfile
+    def initialize(asset_directories:, output:, root:, trace:)
+      @asset_directories = asset_directories
       @output = output
       @root = root
       @trace = trace
@@ -39,7 +39,7 @@ module Jspm
 
     private
 
-    attr_reader :lockfile, :output, :root, :trace
+    attr_reader :asset_directories, :output, :root, :trace
 
     def written?
       import_map_file = root.join(Paths::IMPORT_MAP)
@@ -47,7 +47,7 @@ module Jspm
     end
 
     def stale_asset_paths
-      copies = Assets.copies(lockfile:, root:)
+      copies = Assets.copies(directories: asset_directories, root:)
       stale =
         copies.reject do |source, target|
           target.file? && FileUtils.compare_file(source, target)
