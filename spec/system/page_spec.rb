@@ -14,6 +14,10 @@ RSpec.describe 'a page using jspm-rails' do
       expect(page.get_by_text('Themed by an index module')).to be_visible
     end
 
+    it 'runs an app module imported by a name computed at runtime' do
+      expect(page.get_by_text('Loaded by a computed name')).to be_visible
+    end
+
     it "runs a module from an engine's assets" do
       expect(page.get_by_text('Hello from an engine')).to be_visible
     end

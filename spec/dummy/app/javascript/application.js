@@ -8,5 +8,9 @@ document.getElementById('badge').textContent = badge()
 document.getElementById('theme').textContent = theme
 new TomSelect('#flavor')
 
+const lazyName = ['lazy', 'hello'].join('/')
+const { message } = await import(lazyName)
+document.getElementById('lazy').textContent = message
+
 const { default: katex } = await import('katex')
 katex.render('e^{i\\pi} + 1 = 0', document.getElementById('formula'))
