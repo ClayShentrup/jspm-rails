@@ -1,10 +1,14 @@
 # Changelog
 
-## 0.3.0 (unreleased)
+## 0.3.1 (unreleased)
+
+- Fixes a `KeyError` when jspm scopes dependencies at the filesystem root.
+
+## 0.3.0 (2026-11-13)
 
 - Names every module in `app/javascript` in the import map, so stimulus-rails's `eagerLoadControllersFrom` finds controllers.
 
-## 0.2.0 (unreleased)
+## 0.2.0 (2026-11-13)
 
 - Reads Yarn 1's `yarn.lock` as well as `package-lock.json`.
 - No longer copies npm packages' stylesheets, fonts and images. Put the directories you use on Propshaft's load path instead.
