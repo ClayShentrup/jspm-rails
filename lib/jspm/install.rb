@@ -68,7 +68,7 @@ module Jspm
       conflicts.each do |name, versions|
         report(
           'warn',
-          "#{name}: package-lock.json has #{versions.join(' and ')}, " \
+          "#{name}: #{lockfile.file_name} has #{versions.join(' and ')}, " \
           "and the import map uses #{traced.fetch(name)} everywhere"
         )
       end
