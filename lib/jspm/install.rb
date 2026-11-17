@@ -27,7 +27,11 @@ module Jspm
 
     def call
       FileUtils.rm_rf(root.join(Paths::VENDOR))
-      vendored_files.each { |path, body| write(root.join(path), body) }
+      vendored_files.each do |path, body|
+        file = root.join(path)
+        file.dirname.mkpath
+        file.binwrite(body)
+      end
       root.join(Paths::IMPORT_MAP).write("#{JSON.pretty_generate(trace.import_map)}\n")
 
       report('traced', Paths::ENTRY_PATH)
@@ -39,11 +43,6 @@ module Jspm
     private
 
     attr_reader :lockfile, :output, :root, :trace, :vendored_files
-
-    def write(file, body)
-      file.dirname.mkpath
-      file.binwrite(body)
-    end
 
     def warn_about_versions
       packages =

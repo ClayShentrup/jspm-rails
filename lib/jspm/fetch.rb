@@ -22,9 +22,12 @@ module Jspm
         urls.flat_map do |url|
           body = http.get(URI(url).path).tap(&:value).body
           path = File.join(Paths::VENDOR, Paths.logical(url))
-          source_maps = body.scan(SOURCE_MAP).map { |(map_path)| URI.join(url, map_path).to_s }
-          [[path, body], *fetch_all(http, source_maps)]
+          [[path, body], *fetch_all(http, source_maps(url, body))]
         end
+      end
+
+      def source_maps(url, body)
+        body.scan(SOURCE_MAP).map { |(path)| URI.join(url, path).to_s }
       end
     end
   end

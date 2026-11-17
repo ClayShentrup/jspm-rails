@@ -25,7 +25,7 @@ module Jspm
       written = written?
       drifted = drifted_files
       report('stale', Paths::IMPORT_MAP) unless written
-      drifted.each { |path, status| report(status, path) }
+      drifted.each { |status, path| report(status, path) }
 
       up_to_date = written && drifted.empty?
       if up_to_date
@@ -46,14 +46,14 @@ module Jspm
     end
 
     def drifted_files
-      statuses = vendored_files.to_h { |path, body| [path, drift(root.join(path), body)] }
-      statuses.compact
-    end
-
-    def drift(file, body)
-      return 'missing' unless file.file?
-
-      'changed' unless file.binread == body
+      vendored_files.filter_map do |path, body|
+        file = root.join(path)
+        if file.file?
+          ['changed', path] unless file.binread == body
+        else
+          ['missing', path]
+        end
+      end
     end
 
     def report(status, message)
