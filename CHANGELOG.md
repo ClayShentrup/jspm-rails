@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.5.0 (2026-11-17)
 
 - `jspm:check` fails when a file in `vendor/jspm` differs from what jspm.io serves, not only when it's missing.
 - The warning about a version the import map can't honor names `yarn.lock` when that's the lockfile it read.
