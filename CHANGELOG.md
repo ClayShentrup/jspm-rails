@@ -1,6 +1,10 @@
 # Changelog
 
-## 0.4.0 (unreleased)
+## Unreleased
+
+- The warning about a version the import map can't honor names `yarn.lock` when that's the lockfile it read.
+
+## 0.4.0 (2026-11-13)
 
 - `javascript_jspm_entry_tags('admin')` loads another module in `app/javascript` as the entry.
 

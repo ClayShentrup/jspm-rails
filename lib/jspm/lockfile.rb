@@ -20,8 +20,10 @@ module Jspm
 
     class << self
       def read(root)
-        packages = root.join('yarn.lock').exist? ? YarnLock.packages(root) : npm_packages(root)
-        new(packages: packages.map { |package| Package.new(**package) })
+        yarn = root.join('yarn.lock').exist?
+        file_name = yarn ? 'yarn.lock' : 'package-lock.json'
+        packages = yarn ? YarnLock.packages(root) : npm_packages(root)
+        new(file_name:, packages: packages.map { |package| Package.new(**package) })
       end
 
       private
@@ -38,9 +40,12 @@ module Jspm
       end
     end
 
-    def initialize(packages:)
+    def initialize(file_name:, packages:)
+      @file_name = file_name
       @packages = packages
     end
+
+    attr_reader :file_name
 
     def resolutions
       packages.select(&:top_level).to_h(&:resolution)

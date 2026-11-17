@@ -322,6 +322,11 @@
   dependencies:
     "@orchidjs/unicode-variants" "^1.1.2"
 
+"@orchidjs/unicode-variants@1.1.1":
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/@orchidjs/unicode-variants/-/unicode-variants-1.1.1.tgz#c52e999d10a99a1c429b0fa30c1c18f4592a2f37"
+  integrity sha512-KWxf9Tb9DabV0lHxsFDoNpwxEojvnHjMvl+PvEVqi7aNkbnfDz7UgNvk0LjBDE2xp53srKz0Sds3JYmnhEkWaw==
+
 "@orchidjs/unicode-variants@^1.1.2":
   version "1.2.2"
   resolved "https://registry.yarnpkg.com/@orchidjs/unicode-variants/-/unicode-variants-1.2.2.tgz#e4cb72a8285f878d1d249b5c631b5d2dfc8971cd"

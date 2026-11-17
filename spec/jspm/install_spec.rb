@@ -74,11 +74,12 @@ RSpec.describe Jspm::Install do
   context 'when the app installs with Yarn' do
     let!(:yarn_app) { FixtureApp.copy('yarn') }
     let(:import_map) { JSON.parse(yarn_app.join('config/importmap.json').read) }
+    let(:output) { StringIO.new }
 
     before do
       described_class.call(
         asset_paths: [yarn_app.join('app/javascript')],
-        output: StringIO.new,
+        output:,
         root: yarn_app
       )
     end
@@ -88,6 +89,13 @@ RSpec.describe Jspm::Install do
     it 'maps each import to the version in yarn.lock' do
       expect(import_map.fetch('imports')).to include(
         'tom-select' => 'https://ga.jspm.io/npm:tom-select@2.4.3/dist/esm/tom-select.complete.js'
+      )
+    end
+
+    it 'names yarn.lock when it warns about a version it could not honor' do
+      expect(output.string.lines.last).to eq(
+        '        warn  @orchidjs/unicode-variants: yarn.lock has 1.1.1 and 1.2.2, ' \
+        "and the import map uses 1.1.1 everywhere\n"
       )
     end
   end
