@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'jspm/check'
+require 'jspm/fetch'
 require 'jspm/helper'
 require 'jspm/install'
 require 'jspm/local_modules'

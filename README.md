@@ -149,7 +149,7 @@ Add the directory you use, not the whole package or all of `node_modules`. Props
 bin/rails jspm:check
 ```
 
-It traces again without writing anything. It fails when an install would change `config/importmap.json`, for example after Dependabot bumps `package-lock.json`. It also fails when a module is missing from `vendor/jspm`:
+It traces again without writing anything. It fails when an install would change `config/importmap.json`, for example after Dependabot bumps `package-lock.json`. It also downloads every vendored file again and fails when one in `vendor/jspm` is missing or differs from what jspm.io serves. A hand edit to vendored code can't pass CI, so it's safe to collapse `vendor/jspm` in diffs:
 
 ```
        stale  config/importmap.json

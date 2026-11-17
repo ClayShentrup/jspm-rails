@@ -4,27 +4,30 @@ require 'json'
 
 module Jspm
   # Traces again without writing anything, and reports whether
-  # config/importmap.json and vendor/jspm match what an install would produce.
+  # config/importmap.json and vendor/jspm match what an install would produce,
+  # byte for byte.
   class Check
     def self.call(asset_paths:, output:, root:)
       lockfile = Lockfile.read(root)
       trace = Trace.call(asset_paths:, lockfile:, root:)
-      new(output:, root:, trace:).call
+      vendored_files = Fetch.call(trace.cdn_urls)
+      new(output:, root:, trace:, vendored_files:).call
     end
 
-    def initialize(output:, root:, trace:)
+    def initialize(output:, root:, trace:, vendored_files:)
       @output = output
       @root = root
       @trace = trace
+      @vendored_files = vendored_files
     end
 
     def call
       written = written?
-      missing = missing_modules
+      drifted = drifted_files
       report('stale', Paths::IMPORT_MAP) unless written
-      missing.each { |path| report('missing', path) }
+      drifted.each { |path, status| report(status, path) }
 
-      up_to_date = written && missing.empty?
+      up_to_date = written && drifted.empty?
       if up_to_date
         report('ok', 'nothing to install')
       else
@@ -35,16 +38,22 @@ module Jspm
 
     private
 
-    attr_reader :output, :root, :trace
+    attr_reader :output, :root, :trace, :vendored_files
 
     def written?
       import_map_file = root.join(Paths::IMPORT_MAP)
       import_map_file.exist? && JSON.parse(import_map_file.read) == trace.import_map
     end
 
-    def missing_modules
-      vendored = trace.cdn_urls.map { |url| File.join(Paths::VENDOR, Paths.logical(url)) }
-      vendored.reject { |path| root.join(path).file? }
+    def drifted_files
+      statuses = vendored_files.to_h { |path, body| [path, drift(root.join(path), body)] }
+      statuses.compact
+    end
+
+    def drift(file, body)
+      return 'missing' unless file.file?
+
+      'changed' unless file.binread == body
     end
 
     def report(status, message)
