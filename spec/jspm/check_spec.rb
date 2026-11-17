@@ -48,6 +48,36 @@ RSpec.describe Jspm::Check do
     end
   end
 
+  context 'when a vendored module was edited' do
+    before do
+      Jspm::Install.call(
+        asset_paths:,
+        output: StringIO.new,
+        root: conflicted
+      )
+      tom_select = conflicted.join('vendor/jspm/ga.jspm.io/npm/tom-select@2.7.0')
+      tom_select.join('dist/esm/constants.js').write('export {};')
+    end
+
+    it 'fails, and names the module' do
+      passed = described_class.call(
+        asset_paths:,
+        output:,
+        root: conflicted
+      )
+
+      aggregate_failures do
+        expect(output.string.lines).to eq(
+          [
+            "     changed  vendor/jspm/ga.jspm.io/npm/tom-select@2.7.0/dist/esm/constants.js\n",
+            "         run  bin/rails jspm:install\n"
+          ]
+        )
+        expect(passed).to be(false)
+      end
+    end
+  end
+
   context 'when a vendored module is gone' do
     before do
       Jspm::Install.call(
